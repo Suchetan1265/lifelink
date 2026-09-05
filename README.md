@@ -107,7 +107,9 @@ cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-It listens on **8080**. The `dev` profile supplies throwaway local values for the
+It listens on **8080**, or whatever `SERVER_PORT` is set to — Oracle XE and Apache
+claim 8080 and 8081 on some machines, so set `SERVER_PORT=8082` and start the
+frontend with a matching `VITE_API_TARGET`. The `dev` profile supplies throwaway local values for the
 JWT signing key, database password and admin password. Those are **not** defaults
 in `application.yml` on purpose: a signing key published in this repository would
 let anyone mint tokens for a deployment that forgot to override it, so the app
@@ -148,7 +150,12 @@ npm run dev
 ```
 
 It serves on **5173** and proxies `/api` to the backend, so the browser stays
-same-origin and there is no CORS preflight in development.
+same-origin and there is no CORS preflight in development. If the backend is not
+on 8080, point the proxy at it:
+
+```bash
+VITE_API_TARGET=http://localhost:8082 npm run dev
+```
 
 Sign in as any seeded account to land on that role's dashboard. Routes are guarded
 by role on the client and enforced again on the server.
@@ -227,9 +234,9 @@ backend/src/main/java/com/lifelink/
 
 ## Known gaps
 
-- **The frontend compiles but has not been used against a live backend.** `npm run
-  build` and the dev server both work, so imports, JSX and the bundle are sound,
-  but no screen has been clicked through end to end. There are no frontend tests.
+- **No frontend tests.** The build, the dev server and the API path through the Vite
+  proxy are all verified, and the full request lifecycle has been exercised against
+  a real database, but no screen has been driven through a browser.
 - **Spring State Machine** is a dependency but unused; `RequestLifecycleService`
   hand-rolls the transition table in `RequestEvent`, which satisfies §3 (validated
   transitions plus an audit row) with far less machinery. Either wire it up or drop

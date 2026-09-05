@@ -70,7 +70,8 @@ app:
     password: ${ADMIN_PASSWORD:}
 
 server:
-  port: 8080
+  # Oracle XE also claims 8080 on some machines; override with SERVER_PORT.
+  port: ${SERVER_PORT:8080}
 
 management:
   endpoints:

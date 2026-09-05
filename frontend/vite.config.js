@@ -2,7 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Proxying /api keeps the browser same-origin in dev, so there is no CORS
-// preflight and tokens are sent as plain headers.
+// preflight and tokens are sent as plain headers. Set VITE_API_TARGET when the
+// backend is not on 8080 -- Oracle XE claims that port on some machines.
+const apiTarget = process.env.VITE_API_TARGET || 'http://localhost:8080';
+
 export default defineConfig({
   plugins: [react()],
   build: {
@@ -22,7 +25,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: apiTarget,
         changeOrigin: true,
       },
     },
