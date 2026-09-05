@@ -27,6 +27,24 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        # Exhausted retries are rejected rather than requeued, so they land
+        # on the dead-letter queue instead of spinning forever (spec 8).
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          initial-interval: 2s
+          multiplier: 2
+          max-attempts: 4
+          max-interval: 30s
+
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    # Blank credentials keep the email worker in log-only mode.
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASSWORD:}
 
   quartz:
     job-store-type: memory
@@ -36,6 +54,9 @@ spring:
       enabled: true
 
 app:
+  notifications:
+    # Address the email worker sends from.
+    from: ${MAIL_FROM:no-reply@lifelink.local}
   jwt:
     # Dev-only default (HS256 needs >= 32 bytes). Set JWT_SECRET in the environment for anything real.
     secret: ${JWT_SECRET:lifelink-dev-only-secret-change-me-0123456789abcdef0123456789abcdef}

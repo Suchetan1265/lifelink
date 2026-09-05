@@ -5,6 +5,12 @@ app:
     password: admin-test-password
 
 spring:
+  rabbitmq:
+    listener:
+      simple:
+        # No broker in tests; publishing is asserted, delivery is not.
+        auto-startup: false
+
   quartz:
     # Tests drive the maintenance services directly, so no timers fire.
     auto-startup: false
