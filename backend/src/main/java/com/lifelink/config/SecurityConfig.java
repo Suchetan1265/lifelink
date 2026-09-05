@@ -47,7 +47,7 @@ public class SecurityConfig {
                                 "/api/auth/password/reset",
                                 "/api/auth/logout",
                                 "/api/meta/**",
-                                "/actuator/health")
+                                "/actuator/health/**")
                         .permitAll()
                         // Everything else under /api needs a token.
                         .requestMatchers("/api/**").authenticated()

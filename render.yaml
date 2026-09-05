@@ -1,0 +1,35 @@
+# Render blueprint. Create the database, Redis and RabbitMQ separately (see
+# docs/DEPLOYMENT.md), then set the connection details as environment
+# variables on this service.
+
+services:
+  - type: web
+    name: lifelink
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    # Only the database matters for readiness; Redis and RabbitMQ are optional.
+    healthCheckPath: /actuator/health/essential
+    envVars:
+      # Demo data, so the deployed app has something to show.
+      - key: SPRING_PROFILES_ACTIVE
+        value: seed
+      # Generated once by Render and kept; the app refuses to start without it.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: admin@lifelink.local
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Full JDBC URL from Neon, including sslmode=require.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      # Where password reset links point: this service's own URL.
+      - key: WEB_BASE_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false

@@ -1,23 +1,25 @@
-# Single image: the React app is built into the Spring Boot jar, so one service
-# serves both and there is no CORS between them.
+# One image serving both halves: the React app is built into the Spring Boot
+# jar, so there is a single service, a single origin, and no CORS.
 
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /build
 
-# Dependencies first, so a source-only change does not re-download them.
-COPY backend/pom.xml backend/pom.xml
-RUN mvn -f backend/pom.xml -B dependency:go-offline -DskipTests
-
-COPY frontend frontend
 COPY backend backend
+COPY frontend frontend
+
+# -Pwebapp runs the npm build and copies dist/ into the jar's static resources.
 RUN mvn -f backend/pom.xml -B -Pwebapp clean package -DskipTests
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
+
+# Run as a non-root user rather than root.
+RUN useradd --system --create-home --uid 10001 lifelink
+USER lifelink
+
 COPY --from=build /build/backend/target/*.jar app.jar
 
-# Hosts assign the port at runtime.
-ENV SERVER_PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java -XX:MaxRAMPercentage=75 -jar app.jar"]
+# MaxRAMPercentage keeps the heap inside a small container's memory limit.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]

@@ -76,14 +76,25 @@ app:
     password: ${ADMIN_PASSWORD:}
 
 server:
-  # Oracle XE also claims 8080 on some machines; override with SERVER_PORT.
-  port: ${SERVER_PORT:8080}
+  # Hosts such as Render assign the port through PORT. SERVER_PORT is the
+  # local override, because Oracle XE claims 8080 on some machines.
+  port: ${PORT:${SERVER_PORT:8080}}
+  forward-headers-strategy: framework
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
+  endpoint:
+    health:
+      group:
+        # Redis and RabbitMQ are accelerators the app degrades without, so
+        # they must not make it look unhealthy -- a platform health check
+        # pointed at the aggregate would restart a perfectly serving app.
+        # Only the database is genuinely required.
+        essential:
+          include: db
 
 logging:
   level:
