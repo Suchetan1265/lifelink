@@ -21,6 +21,9 @@
 		<embedded-postgres.version>2.0.7</embedded-postgres.version>
 		<embedded-postgres-binaries.version>16.2.0</embedded-postgres-binaries.version>
 		<embedded-redis.version>1.4.3</embedded-redis.version>
+		<frontend-plugin.version>1.15.1</frontend-plugin.version>
+		<node.version>v22.12.0</node.version>
+		<frontend.dir>${project.basedir}/../frontend</frontend.dir>
 	</properties>
 
 	<dependencyManagement>
@@ -196,5 +199,64 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!--
+		  Packages the React app into the jar so one service serves both, which
+		  removes CORS entirely and halves what a free host has to run.
+		  Activate with -Pwebapp; plain builds skip it and stay fast.
+		-->
+		<profile>
+			<id>webapp</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.github.eirslett</groupId>
+						<artifactId>frontend-maven-plugin</artifactId>
+						<version>${frontend-plugin.version}</version>
+						<configuration>
+							<workingDirectory>${frontend.dir}</workingDirectory>
+							<nodeVersion>${node.version}</nodeVersion>
+						</configuration>
+						<executions>
+							<execution>
+								<id>install-node-and-npm</id>
+								<goals><goal>install-node-and-npm</goal></goals>
+							</execution>
+							<execution>
+								<id>npm-install</id>
+								<goals><goal>npm</goal></goals>
+								<configuration><arguments>ci --no-audit --no-fund</arguments></configuration>
+							</execution>
+							<execution>
+								<id>npm-build</id>
+								<goals><goal>npm</goal></goals>
+								<configuration><arguments>run build</arguments></configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-resources-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>copy-frontend</id>
+								<phase>prepare-package</phase>
+								<goals><goal>copy-resources</goal></goals>
+								<configuration>
+									<outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${frontend.dir}/dist</directory>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
