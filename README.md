@@ -7,6 +7,9 @@ confirms in time escalate to blood banks.
 Built to [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md): Spring Boot 3 · PostgreSQL ·
 Redis · RabbitMQ · Quartz · JWT.
 
+📖 **[Documentation site](https://suchetan1265.github.io/lifelink/)** — the user guide and
+the technical design document, published from `docs/`.
+
 **Using the app?** See the [user guide](docs/USER_GUIDE.md) — what each role can do,
 the request lifecycle, and why a screen might be empty. This README is the technical
 side: architecture, setup and tests.
