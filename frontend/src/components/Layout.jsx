@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 const NAV_BY_ROLE = {
   DONOR: [
     { to: '/donor', label: 'Dashboard', end: true },
+    { to: '/donor/opportunities', label: 'Where I can donate' },
     { to: '/donor/history', label: 'History' },
   ],
   HOSPITAL: [

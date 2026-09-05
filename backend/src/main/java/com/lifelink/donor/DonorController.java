@@ -1,6 +1,7 @@
 package com.lifelink.donor;
 
 import com.lifelink.donor.dto.AvailabilityRequest;
+import com.lifelink.donor.dto.DonationOpportunityResponse;
 import com.lifelink.donor.dto.DonationResponse;
 import com.lifelink.donor.dto.DonorMatchResponse;
 import com.lifelink.donor.dto.DonorProfileResponse;
@@ -12,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +29,7 @@ import java.util.List;
 public class DonorController {
 
     private final DonorService donorService;
+    private final DonationOpportunityService opportunityService;
 
     @GetMapping
     public DonorProfileResponse getProfile(@AuthenticationPrincipal Long userId) {
@@ -54,6 +58,19 @@ public class DonorController {
     @GetMapping("/matches")
     public List<DonorMatchResponse> getMatches(@AuthenticationPrincipal Long userId) {
         return donorService.getMatches(userId);
+    }
+
+    /** Every open request this donor could serve, not just the ones they were pushed. */
+    @GetMapping("/opportunities")
+    public List<DonationOpportunityResponse> getOpportunities(@AuthenticationPrincipal Long userId) {
+        return opportunityService.opportunities(userId);
+    }
+
+    @PostMapping("/opportunities/{requestId}/accept")
+    public DonorMatchResponse volunteer(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long requestId) {
+        return opportunityService.volunteer(userId, requestId);
     }
 
     @GetMapping("/donations")

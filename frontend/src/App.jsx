@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import DonorDashboard from './pages/donor/DonorDashboard';
 import DonationHistory from './pages/donor/DonationHistory';
+import Opportunities from './pages/donor/Opportunities';
 import RequestList from './pages/hospital/RequestList';
 import RaiseRequest from './pages/hospital/RaiseRequest';
 import RequestDetail from './pages/hospital/RequestDetail';
@@ -24,6 +25,7 @@ export default function App() {
       <Route element={<RequireRole roles={['DONOR']} />}>
         <Route element={<Layout />}>
           <Route path="/donor" element={<DonorDashboard />} />
+          <Route path="/donor/opportunities" element={<Opportunities />} />
           <Route path="/donor/history" element={<DonationHistory />} />
         </Route>
       </Route>

@@ -22,6 +22,9 @@ export const donors = {
   eligibility: () => api.get('/donors/me/eligibility').then(unwrap),
   matches: () => api.get('/donors/me/matches').then(unwrap),
   donations: () => api.get('/donors/me/donations').then(unwrap),
+  opportunities: () => api.get('/donors/me/opportunities').then(unwrap),
+  volunteer: (requestId) =>
+    api.post(`/donors/me/opportunities/${requestId}/accept`).then(unwrap),
   acceptMatch: (matchId) => api.post(`/matches/${matchId}/accept`).then(unwrap),
   declineMatch: (matchId) => api.post(`/matches/${matchId}/decline`).then(unwrap),
 };

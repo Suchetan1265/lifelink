@@ -43,6 +43,13 @@ fails open so a hospital with an emergency is never locked out. The GEO sets are
 rebuilt from Postgres on startup so a cold or flushed Redis cannot silently shrink
 the pool of donors matching can reach.
 
+**Donors are reached two ways.** The matching engine pushes a request at the
+nearest compatible donors when it is raised, and donors can also browse every
+open request their blood group can serve within their travel radius and
+volunteer for one. Either way a donor holds only one live commitment at a time —
+you can give blood once per visit, and two hospitals must never both be counting
+on the same person.
+
 **Notifications are written synchronously and delivered asynchronously.** The row
 the notification bell reads is committed with the work that caused it; email, SMS
 and push are published to RabbitMQ *after* that transaction commits, so an operation
@@ -207,7 +214,7 @@ rotate on every use — presenting one revokes it and issues a new pair.
 | Area | Endpoints |
 |---|---|
 | Auth | `POST /auth/register/{donor,hospital,bloodbank}`, `POST /auth/{login,refresh,logout}`, `GET /auth/me` |
-| Donor | `GET/PUT /donors/me`, `PATCH /donors/me/availability`, `GET /donors/me/{matches,donations,eligibility}`, `POST /matches/{id}/{accept,decline}` |
+| Donor | `GET/PUT /donors/me`, `PATCH /donors/me/availability`, `GET /donors/me/{matches,donations,eligibility,opportunities}`, `POST /donors/me/opportunities/{requestId}/accept`, `POST /matches/{id}/{accept,decline}` |
 | Hospital | `POST/GET /requests`, `GET /requests/{id}`, `GET /requests/{id}/{matches,history}`, `POST /requests/{id}/matches/{matchId}/confirm`, `POST /requests/{id}/{fulfill,cancel}` |
 | Blood bank | `GET/PUT /bloodbanks/me/inventory`, `GET /bloodbanks/me/escalations`, `POST /escalations/{id}/{accept,fulfill}` |
 | Admin | `GET /admin/verifications?type=hospital\|bloodbank`, `POST /admin/verifications/{userId}/{approve,reject}`, `GET /admin/stats`, `PATCH /admin/users/{id}/status` |
