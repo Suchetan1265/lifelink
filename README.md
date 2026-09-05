@@ -100,6 +100,23 @@ that the entities match.
 docker compose up -d
 ```
 
+**Without Docker (Windows).** Redis has no official Windows build, and the
+`Redis.Redis` winget package is version 3.0, which predates the `GEO*` commands
+this project's matching depends on — it will not work. Two options that do:
+
+- **Memurai Developer** (`winget install Memurai.MemuraiDeveloper`) — a maintained
+  Redis-compatible server that installs as a Windows service.
+- **The test binary.** `embedded-redis` ships a real `redis-server` 5.0.14 for
+  Windows, which is what the test suite runs against. Extract and run it:
+
+  ```bash
+  cd ~/lifelink-redis
+  unzip -j ~/.m2/repository/com/github/codemonstur/embedded-redis/1.4.3/embedded-redis-1.4.3.jar \n    redis-server-5.0.14.1-windows-amd64.exe
+  ./redis-server-5.0.14.1-windows-amd64.exe --port 6379
+  ```
+
+Redis 3.2 or newer is required either way, for `GEOADD` and `GEORADIUS`.
+
 ### Start the API
 
 ```bash
