@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { errorMessage } from '../api/client';
 import { homePathFor, useAuth } from '../auth/AuthContext';
+import AuthLayout from '../components/AuthLayout';
 
 export default function Login() {
   const { user, loading, signIn } = useAuth();
@@ -22,8 +23,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       const profile = await signIn(email, password);
-      const intended = location.state?.from?.pathname;
-      navigate(intended || homePathFor(profile.role), { replace: true });
+      navigate(location.state?.from?.pathname || homePathFor(profile.role), { replace: true });
     } catch (loginError) {
       setError(errorMessage(loginError, 'Could not sign in'));
     } finally {
@@ -32,8 +32,10 @@ export default function Login() {
   };
 
   return (
-    <div className="card narrow">
-      <h1>Sign in</h1>
+    <AuthLayout>
+      <h2>Sign in</h2>
+      <p className="sub">Donors, hospitals, blood banks and administrators, one door.</p>
+
       <form onSubmit={handleSubmit}>
         <label>
           Email
@@ -43,6 +45,7 @@ export default function Login() {
             onChange={(event) => setEmail(event.target.value)}
             required
             autoComplete="username"
+            autoFocus
           />
         </label>
         <label>
@@ -58,13 +61,20 @@ export default function Login() {
 
         {error && <p className="error">{error}</p>}
 
-        <button type="submit" className="button" disabled={submitting}>
+        <button type="submit" className="button block" disabled={submitting}>
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-      <p className="muted">
-        No account? <Link to="/register">Register</Link>
+
+      <p className="auth-alt">
+        No account yet? <Link to="/register">Register as a donor, hospital or blood bank</Link>
       </p>
-    </div>
+
+      <p className="demo-hint">
+        <strong>Demo accounts.</strong> Sign in as <code>donor1@lifelink.local</code>,{' '}
+        <code>hospital@lifelink.local</code> or <code>bloodbank@lifelink.local</code> with the
+        password <code>password123</code>.
+      </p>
+    </AuthLayout>
   );
 }

@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { auth, meta } from '../api/endpoints';
 import { errorMessage } from '../api/client';
 import { homePathFor, useAuth } from '../auth/AuthContext';
+import AuthLayout from '../components/AuthLayout';
+import LocationPicker from '../components/LocationPicker';
 
 const TABS = [
   { id: 'donor', label: 'Donor' },
@@ -11,9 +13,8 @@ const TABS = [
   { id: 'bloodbank', label: 'Blood bank' },
 ];
 
-// Bengaluru, so the form opens somewhere sensible rather than null island.
-const DEFAULT_LAT = 12.9716;
-const DEFAULT_LNG = 77.5946;
+// Somewhere sensible to open the map before the browser offers a real position.
+const DEFAULT_POINT = { lat: 12.9716, lng: 77.5946 };
 
 const BLANK = {
   email: '',
@@ -26,8 +27,6 @@ const BLANK = {
   name: '',
   licenseNo: '',
   address: '',
-  lat: DEFAULT_LAT,
-  lng: DEFAULT_LNG,
 };
 
 export default function Register() {
@@ -36,6 +35,7 @@ export default function Register() {
 
   const [tab, setTab] = useState('donor');
   const [form, setForm] = useState(BLANK);
+  const [point, setPoint] = useState(DEFAULT_POINT);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -48,18 +48,16 @@ export default function Register() {
   if (loading) return <p className="muted center">Loading…</p>;
   if (user) return <Navigate to={homePathFor(user.role)} replace />;
 
-  const set = (field) => (event) => {
-    const { value } = event.target;
-    setForm((current) => ({ ...current, [field]: value }));
-  };
+  const set = (field) => (event) =>
+    setForm((current) => ({ ...current, [field]: event.target.value }));
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
 
-    const location = { lat: Number(form.lat), lng: Number(form.lng) };
     const account = { email: form.email, phone: form.phone, password: form.password };
+    const location = { lat: point.lat, lng: point.lng };
 
     try {
       let tokens;
@@ -98,15 +96,20 @@ export default function Register() {
     }
   };
 
-  return (
-    <div className="card narrow">
-      <h1>Create an account</h1>
+  const isDonor = tab === 'donor';
 
-      <div className="tabs">
+  return (
+    <AuthLayout>
+      <h2>Create an account</h2>
+      <p className="sub">Tell us who you are and where you are.</p>
+
+      <div className="tabs" role="tablist">
         {TABS.map((option) => (
           <button
             key={option.id}
             type="button"
+            role="tab"
+            aria-selected={tab === option.id}
             className={tab === option.id ? 'tab active' : 'tab'}
             onClick={() => {
               setTab(option.id);
@@ -118,9 +121,10 @@ export default function Register() {
         ))}
       </div>
 
-      {tab !== 'donor' && (
-        <p className="muted">
-          Hospitals and blood banks stay pending until an admin verifies the registration.
+      {!isDonor && (
+        <p className="field-hint">
+          Hospitals and blood banks stay pending until an administrator verifies the registration.
+          You can sign in straight away, but you cannot raise requests or hold stock until then.
         </p>
       )}
 
@@ -131,7 +135,7 @@ export default function Register() {
         </label>
         <label>
           Phone
-          <input value={form.phone} onChange={set('phone')} placeholder="+91-90000-00000" />
+          <input value={form.phone} onChange={set('phone')} placeholder="+91 90000 00000" />
         </label>
         <label>
           Password
@@ -143,9 +147,10 @@ export default function Register() {
             minLength={8}
             autoComplete="new-password"
           />
+          <span className="field-hint">At least 8 characters.</span>
         </label>
 
-        {tab === 'donor' ? (
+        {isDonor ? (
           <>
             <label>
               Full name
@@ -165,27 +170,18 @@ export default function Register() {
               City
               <input value={form.city} onChange={set('city')} required />
             </label>
-            <label>
-              How far will you travel? ({form.radiusKm} km)
-              <input
-                type="range"
-                min="1"
-                max="100"
-                value={form.radiusKm}
-                onChange={set('radiusKm')}
-              />
-            </label>
           </>
         ) : (
           <>
             <label>
-              Name
+              {tab === 'hospital' ? 'Hospital name' : 'Blood bank name'}
               <input value={form.name} onChange={set('name')} required />
             </label>
             {tab === 'hospital' && (
               <label>
                 Licence number
                 <input value={form.licenseNo} onChange={set('licenseNo')} required />
+                <span className="field-hint">An administrator checks this before approving you.</span>
               </label>
             )}
             <label>
@@ -195,27 +191,38 @@ export default function Register() {
           </>
         )}
 
-        <div className="row">
+        <LocationPicker
+          value={point}
+          onChange={setPoint}
+          label={isDonor ? 'Where you are' : 'Where you are based'}
+        />
+
+        {isDonor && (
           <label>
-            Latitude
-            <input type="number" step="0.0001" value={form.lat} onChange={set('lat')} required />
+            How far will you travel to donate? <strong>{form.radiusKm} km</strong>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={form.radiusKm}
+              onChange={set('radiusKm')}
+            />
+            <span className="field-hint">
+              You will only ever be shown requests inside this radius.
+            </span>
           </label>
-          <label>
-            Longitude
-            <input type="number" step="0.0001" value={form.lng} onChange={set('lng')} required />
-          </label>
-        </div>
+        )}
 
         {error && <p className="error">{error}</p>}
 
-        <button type="submit" className="button" disabled={submitting}>
+        <button type="submit" className="button block" disabled={submitting}>
           {submitting ? 'Creating…' : 'Create account'}
         </button>
       </form>
 
-      <p className="muted">
+      <p className="auth-alt">
         Already registered? <Link to="/login">Sign in</Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 }
