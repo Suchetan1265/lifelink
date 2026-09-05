@@ -1,0 +1,1031 @@
+<title>LifeLink User Guide</title>
+<style>
+  :root {
+    --ground: #f5f3f3;
+    --surface: #ffffff;
+    --surface-sunk: #efebec;
+    --ink: #191517;
+    --ink-soft: #443c3f;
+    --muted: #6d6367;
+    --line: #e5dedf;
+    --line-strong: #d3c9cb;
+    --accent: #b3121b;
+    --accent-soft: #f7e9ea;
+
+    --state-open: #1d4ed8;
+    --state-progress: #4f46e5;
+    --state-good: #157f3d;
+    --state-warn: #a35a09;
+    --state-bad: #c0271f;
+    --state-off: #6d6367;
+
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
+
+    --measure: 66ch;
+  }
+
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131011;
+      --surface: #1b1718;
+      --surface-sunk: #241f20;
+      --ink: #f1eced;
+      --ink-soft: #cdc4c6;
+      --muted: #a09598;
+      --line: #2e2829;
+      --line-strong: #413a3c;
+      --accent: #f26761;
+      --accent-soft: #33191a;
+
+      --state-open: #7aa2f7;
+      --state-progress: #a5a0f5;
+      --state-good: #5fc98a;
+      --state-warn: #e0a458;
+      --state-bad: #f0766c;
+      --state-off: #a09598;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #131011;
+    --surface: #1b1718;
+    --surface-sunk: #241f20;
+    --ink: #f1eced;
+    --ink-soft: #cdc4c6;
+    --muted: #a09598;
+    --line: #2e2829;
+    --line-strong: #413a3c;
+    --accent: #f26761;
+    --accent-soft: #33191a;
+
+    --state-open: #7aa2f7;
+    --state-progress: #a5a0f5;
+    --state-good: #5fc98a;
+    --state-warn: #e0a458;
+    --state-bad: #f0766c;
+    --state-off: #a09598;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 3rem;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    grid-column: 1 / -1;
+    padding: 4rem 0 2.5rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.9rem;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    text-wrap: balance;
+    margin: 0 0 1rem;
+  }
+
+  .standfirst {
+    max-width: var(--measure);
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* ---------- navigation ---------- */
+
+  nav {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    padding-top: 3rem;
+  }
+
+  nav h2 {
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 0.75rem;
+  }
+
+  nav ol {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  nav a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-left: 2px solid var(--line);
+    padding: 0.15rem 0 0.15rem 0.75rem;
+    display: block;
+  }
+
+  nav a:hover, nav a:focus-visible {
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+
+  /* ---------- content ---------- */
+
+  main { padding-top: 3rem; min-width: 0; }
+
+  section + section { margin-top: 4rem; }
+
+  h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.022em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 0.4rem;
+    scroll-margin-top: 2rem;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: 1.08rem;
+    letter-spacing: -0.012em;
+    margin: 2.25rem 0 0.6rem;
+    text-wrap: balance;
+  }
+
+  .role-tag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  p, li { max-width: var(--measure); }
+  p { margin: 0 0 1rem; }
+
+  a { color: var(--accent); }
+
+  strong { font-weight: 700; color: var(--ink); }
+
+  .lede {
+    font-size: 1.06rem;
+    color: var(--ink-soft);
+    margin-bottom: 1.75rem;
+  }
+
+  /* ---------- role cards ---------- */
+
+  .roles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 1rem;
+    margin: 1.75rem 0;
+  }
+
+  .role {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--accent);
+    padding: 1.1rem 1.15rem;
+  }
+
+  .role h3 {
+    margin: 0 0 0.3rem;
+    font-size: 1rem;
+  }
+
+  .role p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ---------- numbered flows ---------- */
+
+  .flow {
+    list-style: none;
+    counter-reset: step;
+    margin: 1.5rem 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .flow > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 1rem;
+    max-width: none;
+  }
+
+  .flow > li::before {
+    content: counter(step);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+  }
+
+  .flow h4 {
+    font-family: var(--sans);
+    font-size: 0.98rem;
+    font-weight: 650;
+    margin: 0.15rem 0 0.3rem;
+  }
+
+  .flow p { margin: 0 0 0.5rem; }
+  .flow p:last-child { margin-bottom: 0; }
+
+  /* ---------- chips ---------- */
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 0.08em 0.5em;
+    border: 1px solid currentColor;
+    border-radius: 2em;
+    white-space: nowrap;
+  }
+
+  .s-open { color: var(--state-open); }
+  .s-progress { color: var(--state-progress); }
+  .s-good { color: var(--state-good); }
+  .s-warn { color: var(--state-warn); }
+  .s-bad { color: var(--state-bad); }
+  .s-off { color: var(--state-off); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--surface-sunk);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+  }
+
+  /* ---------- lifecycle ---------- */
+
+  .lifecycle {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+  .lifecycle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    padding-bottom: 0.9rem;
+  }
+
+  .lifecycle-row:last-child { padding-bottom: 0; }
+
+  .arrow {
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+  }
+
+  .lifecycle-note {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0.9rem 0 0;
+    max-width: none;
+  }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-sunk);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  td.group {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  td.gives { font-family: var(--mono); font-size: 0.82rem; }
+
+  /* ---------- callout ---------- */
+
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.15rem;
+    margin: 1.5rem 0;
+  }
+
+  .note p { margin: 0; font-size: 0.95rem; }
+  .note p + p { margin-top: 0.6rem; }
+
+  .note strong { color: var(--accent); }
+
+  /* ---------- troubleshooting ---------- */
+
+  .faq {
+    border-top: 1px solid var(--line);
+    margin-top: 1.5rem;
+  }
+
+  .faq details {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .faq summary {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: 0.98rem;
+    padding: 0.9rem 0;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    gap: 0.7rem;
+    align-items: baseline;
+  }
+
+  .faq summary::-webkit-details-marker { display: none; }
+
+  .faq summary::before {
+    content: "+";
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 400;
+    flex: none;
+  }
+
+  .faq details[open] summary::before { content: "\2212"; }
+
+  .faq summary:hover, .faq summary:focus-visible { color: var(--accent); }
+
+  .faq .answer { padding: 0 0 1.1rem 1.4rem; }
+  .faq .answer p { font-size: 0.95rem; }
+  .faq .answer p:last-child { margin-bottom: 0; }
+
+  footer {
+    grid-column: 1 / -1;
+    margin-top: 4.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-family: var(--sans);
+    font-size: 0.84rem;
+    color: var(--muted);
+  }
+
+  footer p { max-width: none; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 900px) {
+    .page {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      padding: 0 1.5rem 4rem;
+    }
+    nav {
+      position: static;
+      padding-top: 2rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 1.5rem;
+    }
+    nav ol { margin-bottom: 0; }
+    main { padding-top: 2.5rem; }
+    .masthead { padding-top: 2.5rem; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">User Guide</p>
+    <h1>LifeLink</h1>
+    <p class="standfirst">
+      Hospitals post what they need. Nearby donors with a compatible blood group hear about it in
+      seconds. Anything nobody confirms in time goes to the blood banks. This guide covers what each
+      role can do and the order things happen in.
+    </p>
+  </header>
+
+  <nav>
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#roles">The four roles</a></li>
+      <li><a href="#lifecycle">Life of a request</a></li>
+      <li><a href="#donor">Donors</a></li>
+      <li><a href="#hospital">Hospitals</a></li>
+      <li><a href="#bank">Blood banks</a></li>
+      <li><a href="#admin">Administrators</a></li>
+      <li><a href="#automatic">What happens on its own</a></li>
+      <li><a href="#compatibility">Who can give to whom</a></li>
+      <li><a href="#troubleshooting">When something looks wrong</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="roles">
+      <h2>The four roles</h2>
+      <p class="lede">
+        Every account is one role, chosen at registration. What you see after signing in is
+        determined entirely by that role.
+      </p>
+
+      <div class="roles">
+        <article class="role">
+          <h3>Donor</h3>
+          <p>Manages availability, finds requests they can help with, responds, and donates. Usable
+            the moment you register.</p>
+        </article>
+        <article class="role">
+          <h3>Hospital</h3>
+          <p>Raises requests for blood, picks a donor from those who accept, and records the
+            donation. Needs approval first.</p>
+        </article>
+        <article class="role">
+          <h3>Blood bank</h3>
+          <p>Keeps stock levels up to date and covers requests that no donor confirmed in time.
+            Needs approval first.</p>
+        </article>
+        <article class="role">
+          <h3>Administrator</h3>
+          <p>Approves or rejects hospital and blood bank registrations, and watches platform
+            health.</p>
+        </article>
+      </div>
+
+      <div class="note">
+        <p><strong>Donors are trusted, organisations are not.</strong> A donor can use LifeLink
+          immediately. A hospital or blood bank is held at
+          <span class="chip s-warn">PENDING</span> until an administrator has checked it, because
+          anyone claiming to be a hospital could otherwise summon donors to an address.</p>
+      </div>
+    </section>
+
+    <section id="lifecycle">
+      <h2>Life of a request</h2>
+      <p class="lede">
+        Everything in LifeLink revolves around one object: a request for blood. It moves through a
+        fixed set of states, and the buttons you see depend on which state it is in.
+      </p>
+
+      <div class="lifecycle">
+        <div class="lifecycle-row">
+          <span class="chip s-open">RAISED</span>
+          <span class="arrow">a donor accepts &rarr;</span>
+          <span class="chip s-progress">MATCHED</span>
+          <span class="arrow">hospital picks one &rarr;</span>
+          <span class="chip s-progress">CONFIRMED</span>
+          <span class="arrow">donation recorded &rarr;</span>
+          <span class="chip s-good">FULFILLED</span>
+        </div>
+        <div class="lifecycle-row">
+          <span class="chip s-open">RAISED</span>
+          <span class="arrow">or</span>
+          <span class="chip s-progress">MATCHED</span>
+          <span class="arrow">deadline passes &rarr;</span>
+          <span class="chip s-warn">ESCALATED</span>
+          <span class="arrow">a bank accepts &rarr;</span>
+          <span class="chip s-progress">CONFIRMED</span>
+        </div>
+        <div class="lifecycle-row">
+          <span class="arrow">anything still open</span>
+          <span class="arrow">needed-by time passes &rarr;</span>
+          <span class="chip s-bad">EXPIRED</span>
+        </div>
+        <div class="lifecycle-row">
+          <span class="arrow">anything not yet fulfilled</span>
+          <span class="arrow">hospital cancels &rarr;</span>
+          <span class="chip s-off">CANCELLED</span>
+        </div>
+        <p class="lifecycle-note">
+          Every move is recorded with who did it, when, and why. Hospitals see the full history as a
+          timeline on the request page.
+        </p>
+      </div>
+
+      <p>
+        The states are not decorative. A hospital cannot confirm a donor before that donor has
+        accepted, and cannot record a donation before confirming someone. If a button you expect is
+        missing, the request is almost always in a state that does not allow it yet.
+      </p>
+    </section>
+
+    <section id="donor">
+      <span class="role-tag">Role guide</span>
+      <h2>Donors</h2>
+      <p class="lede">
+        You control when you are reachable, and you can either wait to be asked or go looking for
+        somewhere to give.
+      </p>
+
+      <h3>Setting yourself up</h3>
+      <ol class="flow">
+        <li>
+          <div>
+            <h4>Register</h4>
+            <p>Give your blood group, your city, your location, and how far you are willing to
+              travel. The travel radius matters: you will only ever be shown requests inside it.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Turn availability on</h4>
+            <p>New accounts start unavailable, so nothing reaches you until you flip the switch on
+              your dashboard. Turn it off any time you cannot donate — travelling, unwell, just
+              busy — and you drop out of matching until you turn it back on.</p>
+          </div>
+        </li>
+      </ol>
+
+      <h3>Two ways to find a request</h3>
+      <p>
+        <strong>You get asked.</strong> When a hospital raises a request, LifeLink finds the nearest
+        available donors with a compatible group and notifies them. Those appear on your dashboard
+        as cards you can accept or decline.
+      </p>
+      <p>
+        <strong>You go looking.</strong> The <em>Where I can donate</em> screen lists every open
+        request your blood group can serve within your travel radius, most urgent first, whether or
+        not anyone picked you. Choosing one there counts as accepting it.
+      </p>
+
+      <div class="note">
+        <p><strong>You hold one commitment at a time.</strong> Once you accept, you stay committed
+          to that request until it is fulfilled, cancelled, or you decline. You can give blood once
+          per visit, and two hospitals must never both be counting on you.</p>
+      </div>
+
+      <h3>From accepting to donating</h3>
+      <ol class="flow">
+        <li>
+          <div>
+            <h4>Accept</h4>
+            <p>You are telling the hospital you are willing to come. It does not commit you to a
+              time yet, and other donors may have accepted too.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Wait to be confirmed</h4>
+            <p>The hospital picks who it needs. If they pick you, you get a notification with the
+              address and the time blood is needed by. If they pick someone else, you are told the
+              request is covered and you are free again.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Donate</h4>
+            <p>Go and give blood. The hospital records it in LifeLink afterwards — you do not need
+              to do anything in the app.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Rest for 90 days</h4>
+            <p>Recording the donation starts your cooldown. Your dashboard counts down the days,
+              and you are held out of matching until it ends. When it does, LifeLink tells you that
+              you can donate again.</p>
+          </div>
+        </li>
+      </ol>
+
+      <h3>What else is on your screens</h3>
+      <p>
+        <strong>Eligibility</strong> shows whether you can donate today and, if not, the date you
+        can. <strong>History</strong> lists everything you have given and the total units.
+        <strong>Notifications</strong> collects everything LifeLink has told you.
+      </p>
+    </section>
+
+    <section id="hospital">
+      <span class="role-tag">Role guide</span>
+      <h2>Hospitals</h2>
+      <p class="lede">
+        You describe what you need and how urgently. LifeLink finds donors; you decide who actually
+        comes.
+      </p>
+
+      <h3>Before you can do anything</h3>
+      <p>
+        Registration asks for your name, licence number, address and location. The account is
+        created immediately but sits at <span class="chip s-warn">PENDING</span>, and any attempt to
+        raise a request is refused until an administrator approves you. You will get a notification
+        either way; a rejection includes the reason.
+      </p>
+
+      <h3>Running a request</h3>
+      <ol class="flow">
+        <li>
+          <div>
+            <h4>Raise it</h4>
+            <p>Choose the blood group, how many units, and when it is needed by. Urgency is the
+              important field — it decides how long LifeLink waits for a donor before falling back
+              to blood banks. The form shows which donor groups can supply the group you pick.</p>
+            <p>Donors are notified the moment you submit.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Watch the responses</h4>
+            <p>The request page lists every donor contacted and where they stand:
+              <span class="chip s-open">NOTIFIED</span> means they have not replied,
+              <span class="chip s-good">ACCEPTED</span> means they are willing to come,
+              <span class="chip s-off">DECLINED</span> means they cannot. The page refreshes itself,
+              and a map shows where the donors are relative to you.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Confirm a donor</h4>
+            <p>A <strong>Confirm</strong> button appears next to anyone who has accepted. Pressing
+              it commits that person, sends them your address and the needed-by time, and tells the
+              other donors who accepted that the request is covered.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Record the donation</h4>
+            <p>Once someone is confirmed, a <strong>Record the donation</strong> panel appears.
+              Entering the units closes the request as <span class="chip s-good">FULFILLED</span>,
+              writes the donation to the donor's history, and starts their 90-day cooldown.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="note">
+        <p><strong>The two steps cannot be skipped.</strong> Confirming is what tells one specific
+          person to travel; recording is what says blood actually changed hands. If the confirm
+          button is missing, nobody has accepted yet. If the record panel is missing, you have not
+          confirmed anyone.</p>
+      </div>
+
+      <h3>Cancelling, and what happens if nobody comes</h3>
+      <p>
+        You can cancel at any point before the donation is recorded. A reason is required and is
+        kept in the timeline; donors who had accepted are told not to come.
+      </p>
+      <p>
+        If no donor is confirmed before the urgency deadline, LifeLink escalates the request to
+        blood banks near you automatically. You do not need to do anything, and you are told when a
+        bank takes it on. If the needed-by time passes with nothing fulfilled, the request expires.
+      </p>
+
+      <div class="note">
+        <p><strong>Ten requests per hour.</strong> Beyond that, LifeLink refuses further requests
+          for the rest of the hour. It exists to stop a misconfigured system flooding every donor in
+          the city.</p>
+      </div>
+    </section>
+
+    <section id="bank">
+      <span class="role-tag">Role guide</span>
+      <h2>Blood banks</h2>
+      <p class="lede">
+        You are the safety net. Requests reach you only once the donor route has run out of time.
+      </p>
+
+      <h3>Keeping stock current</h3>
+      <p>
+        The inventory screen shows all eight blood groups with the units you hold. Editing it is the
+        only thing you need to do routinely, and it matters: when a request is offered to you, the
+        screen shows whether you actually hold enough to cover it, and releasing stock you do not
+        have is refused.
+      </p>
+
+      <h3>Taking on a request</h3>
+      <ol class="flow">
+        <li>
+          <div>
+            <h4>A request escalates to you</h4>
+            <p>When no donor confirms in time, the request is offered to every verified blood bank
+              within 50 km of the hospital. It appears on your escalations screen with the distance,
+              the urgency, and how many units you currently hold of that group.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Accept it</h4>
+            <p>This tells the hospital you are covering the request and locks it to you. Only one
+              bank can accept — a second attempt is refused — and only the bank that accepted can
+              then release stock against it.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h4>Release the stock</h4>
+            <p>Entering the units closes the request as
+              <span class="chip s-good">FULFILLED</span> and decrements your inventory by exactly
+              that amount. If you do not hold enough, nothing is deducted and the request stays
+              open to you.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="admin">
+      <span class="role-tag">Role guide</span>
+      <h2>Administrators</h2>
+      <p class="lede">
+        You are the gate. Until you approve a hospital, it cannot ask anyone for blood.
+      </p>
+
+      <h3>The verification queue</h3>
+      <p>
+        Pending hospitals and blood banks are listed separately, each showing the contact details,
+        address and — for hospitals — the licence number to check. Approving activates the account
+        immediately. Rejecting disables it, ends any signed-in session, and sends the applicant your
+        reason, so write something they can act on.
+      </p>
+      <p>
+        A rejection is not permanent: approving a rejected account later reactivates it.
+      </p>
+
+      <h3>Platform statistics</h3>
+      <p>
+        The stats screen covers requests broken down by state, the share that ended in a donation,
+        the average time from raising a request to fulfilling it, and donor counts by blood group
+        and by city — useful for spotting a group you are thin on. Figures are cached for five
+        minutes, so they can lag slightly behind live activity.
+      </p>
+
+      <h3>Suspending an account</h3>
+      <p>
+        Any account can be disabled, which blocks sign-in and invalidates existing sessions. You
+        cannot change your own status, so there is no way to lock yourself out.
+      </p>
+    </section>
+
+    <section id="automatic">
+      <h2>What happens on its own</h2>
+      <p class="lede">
+        Three jobs run in the background. Nobody triggers them, and they are the reason a request
+        never sits forgotten.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Job</th><th>When</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Escalation</strong></td>
+              <td>Every 15 minutes</td>
+              <td>Moves requests past their urgency deadline to
+                <span class="chip s-warn">ESCALATED</span> and alerts blood banks within 50 km.</td>
+            </tr>
+            <tr>
+              <td><strong>Expiry</strong></td>
+              <td>Every 15 minutes</td>
+              <td>Closes requests whose needed-by time has passed as
+                <span class="chip s-bad">EXPIRED</span> and tells the hospital.</td>
+            </tr>
+            <tr>
+              <td><strong>Eligibility</strong></td>
+              <td>Daily, 00:05</td>
+              <td>Tells donors whose 90-day cooldown ended that they can give again, and returns
+                them to matching.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>How long before a request escalates</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Urgency</th><th>Waits for donors</th><th>Use it when</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="group">CRITICAL</td><td>2 hours</td><td>Someone is bleeding now.</td></tr>
+            <tr><td class="group">HIGH</td><td>6 hours</td><td>Needed today, but not this minute.</td></tr>
+            <tr><td class="group">NORMAL</td><td>24 hours</td><td>Planned surgery, restocking.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="compatibility">
+      <h2>Who can give to whom</h2>
+      <p class="lede">
+        LifeLink applies this automatically — a donor is never shown a request they cannot safely
+        supply — but it explains a lot of what you see.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Patient needs</th>
+              <th>Can receive from</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="group">O&minus;</td><td class="gives">O&minus;</td></tr>
+            <tr><td class="group">O+</td><td class="gives">O&minus; &middot; O+</td></tr>
+            <tr><td class="group">A&minus;</td><td class="gives">O&minus; &middot; A&minus;</td></tr>
+            <tr><td class="group">A+</td><td class="gives">O&minus; &middot; O+ &middot; A&minus; &middot; A+</td></tr>
+            <tr><td class="group">B&minus;</td><td class="gives">O&minus; &middot; B&minus;</td></tr>
+            <tr><td class="group">B+</td><td class="gives">O&minus; &middot; O+ &middot; B&minus; &middot; B+</td></tr>
+            <tr><td class="group">AB&minus;</td><td class="gives">O&minus; &middot; A&minus; &middot; B&minus; &middot; AB&minus;</td></tr>
+            <tr><td class="group">AB+</td><td class="gives">every group</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Read the other way round: <strong>O&minus; donors can help anyone</strong>, which is why
+        they are asked most often, and <strong>AB+ donors can only help AB+ patients</strong>, so
+        they see the fewest requests. An O+ donor seeing a B+ request is not a bug — O+ can supply
+        O+, A+, B+ and AB+.
+      </p>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>When something looks wrong</h2>
+      <p class="lede">
+        Most surprises come from one of a few rules working as designed.
+      </p>
+
+      <div class="faq">
+        <details>
+          <summary>I am a donor and I see no requests at all</summary>
+          <div class="answer">
+            <p>Check availability is on — new accounts start off, and while it is off nothing
+              reaches you.</p>
+            <p>If it is on, open <em>Where I can donate</em>. Donors are notified when a request is
+              raised, so anything raised before you registered or before you became available will
+              not have reached you. That screen shows everything open regardless.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>I can see one request but I know there are others</summary>
+          <div class="answer">
+            <p>You are already committed to one. LifeLink holds you to a single live request at a
+              time. Decline it, or see it through, and the rest become available to you again.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>A request is open near me but is not offered to me</summary>
+          <div class="answer">
+            <p>Three things filter it out: your blood group cannot supply that patient, the
+              hospital is outside your travel radius, or you are inside your 90-day cooldown. Your
+              eligibility panel shows the cooldown, and you can widen the radius on your profile.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>My hospital cannot raise a request</summary>
+          <div class="answer">
+            <p>The account is still awaiting approval. Hospitals are refused until an administrator
+              has verified them. Check your notifications — if you were rejected, the reason is
+              there.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>There is no Confirm button next to a donor</summary>
+          <div class="answer">
+            <p>It only appears for donors who have <span class="chip s-good">ACCEPTED</span>. Anyone
+              still showing <span class="chip s-open">NOTIFIED</span> has not replied yet, and you
+              cannot commit someone who has not agreed to come.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>I confirmed a donor but cannot record the donation</summary>
+          <div class="answer">
+            <p>The panel appears once the request reaches
+              <span class="chip s-progress">CONFIRMED</span>. If the request escalated to a blood
+              bank instead, the bank records it by releasing stock, not you.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>My blood bank has no escalations</summary>
+          <div class="answer">
+            <p>That is the normal state — it means donors are covering requests. A request only
+              reaches you after its urgency deadline passes with nobody confirmed, and only if the
+              hospital is within 50 km of you.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>I was told I have raised too many requests</summary>
+          <div class="answer">
+            <p>There is a limit of ten per hour per hospital. It resets an hour after your first
+              request in the current window. If you genuinely need more, the earlier requests are
+              still open and working — raising duplicates will not find extra donors, because a
+              donor already tied to one of your requests is not offered another.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>
+      LifeLink &middot; blood donor and hospital matching. Statuses and timings in this guide match
+      the behaviour of the running system.
+    </p>
+  </footer>
+
+</div>
