@@ -6,7 +6,7 @@ export default function Landing() {
   const { user, loading } = useAuth();
 
   if (loading) return <p className="muted center">Loading…</p>;
-  if (user) return <Navigate to={homePathFor(user.role)} replace />;
+  if (user) return <Navigate to={homePathFor(user.role, user.profileComplete)} replace />;
 
   return (
     <AuthLayout>

@@ -11,7 +11,8 @@ public enum NotificationType {
     REQUEST_CANCELLED(true),   // donor: the request you responded to was cancelled
     DONATION_RECORDED(false),  // donor: donation saved, eligibility updated
     ELIGIBLE_AGAIN(false),     // donor: 90-day cooldown is over
-    VERIFICATION_RESULT(false); // hospital/bank: admin approved or rejected you
+    VERIFICATION_RESULT(false), // hospital/bank: admin approved or rejected you
+    PASSWORD_RESET(false);      // anyone: a link to choose a new password
 
     private final boolean warrantsSms;
 

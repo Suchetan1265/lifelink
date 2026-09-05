@@ -93,8 +93,7 @@ export default function LocationPicker({ value, onChange, label = 'Location' }) 
     );
   };
 
-  const search = async (event) => {
-    event.preventDefault();
+  const search = async () => {
     if (!query.trim()) return;
     setBusy(true);
     setStatus(null);
@@ -122,20 +121,27 @@ export default function LocationPicker({ value, onChange, label = 'Location' }) 
     <div>
       <span className="field-label">{label}</span>
       <div className="locator">
-        <form className="locator-bar" onSubmit={search}>
+        <div className="locator-bar">
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter must search, not submit the registration form around us.
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                search();
+              }
+            }}
             placeholder="Search a place, area or landmark"
             aria-label="Search for a place"
           />
-          <button type="submit" className="button ghost small" disabled={busy}>
+          <button type="button" className="button ghost small" onClick={search} disabled={busy}>
             Search
           </button>
           <button type="button" className="button small" onClick={useMyLocation} disabled={busy}>
             Use my location
           </button>
-        </form>
+        </div>
 
         {results.length > 0 && (
           <ul className="locator-results">

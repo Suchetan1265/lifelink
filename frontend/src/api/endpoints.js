@@ -9,10 +9,15 @@ export const auth = {
   registerBloodBank: (body) => api.post('/auth/register/bloodbank', body).then(unwrap),
   logout: (refreshToken) => api.post('/auth/logout', { refreshToken }).then(unwrap),
   me: () => api.get('/auth/me').then(unwrap),
+  google: (credential) => api.post('/auth/google', { credential }).then(unwrap),
+  forgotPassword: (email) => api.post('/auth/password/forgot', { email }).then(unwrap),
+  resetPassword: (token, newPassword) =>
+    api.post('/auth/password/reset', { token, newPassword }).then(unwrap),
 };
 
 export const meta = {
   bloodGroups: () => api.get('/meta/blood-groups').then(unwrap),
+  authConfig: () => api.get('/meta/auth-config').then(unwrap),
 };
 
 export const donors = {

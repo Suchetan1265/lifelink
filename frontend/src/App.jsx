@@ -4,6 +4,9 @@ import RequireRole from './auth/RequireRole';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import CompleteProfile from './pages/donor/CompleteProfile';
 import DonorDashboard from './pages/donor/DonorDashboard';
 import DonationHistory from './pages/donor/DonationHistory';
 import Opportunities from './pages/donor/Opportunities';
@@ -21,8 +24,12 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<RequireRole roles={['DONOR']} />}>
+        {/* Outside the shell: there is no dashboard to show until it is done. */}
+        <Route path="/donor/complete-profile" element={<CompleteProfile />} />
         <Route element={<Layout />}>
           <Route path="/donor" element={<DonorDashboard />} />
           <Route path="/donor/opportunities" element={<Opportunities />} />

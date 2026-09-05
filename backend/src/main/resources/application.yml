@@ -53,6 +53,12 @@ spring:
       enabled: true
 
 app:
+  google:
+    # Blank disables Google sign-in; the client hides the button when unset.
+    client-id: ${GOOGLE_CLIENT_ID:}
+  web:
+    # Where password reset links point; the frontend origin.
+    base-url: ${WEB_BASE_URL:http://localhost:5173}
   notifications:
     # Address the email worker sends from.
     from: ${MAIL_FROM:no-reply@lifelink.local}

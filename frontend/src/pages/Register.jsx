@@ -46,7 +46,7 @@ export default function Register() {
   });
 
   if (loading) return <p className="muted center">Loading…</p>;
-  if (user) return <Navigate to={homePathFor(user.role)} replace />;
+  if (user) return <Navigate to={homePathFor(user.role, user.profileComplete)} replace />;
 
   const set = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }));
@@ -88,7 +88,7 @@ export default function Register() {
       }
 
       const profile = await startSession(tokens);
-      navigate(homePathFor(profile.role), { replace: true });
+      navigate(homePathFor(profile.role, profile.profileComplete), { replace: true });
     } catch (registerError) {
       setError(errorMessage(registerError, 'Could not create the account'));
     } finally {

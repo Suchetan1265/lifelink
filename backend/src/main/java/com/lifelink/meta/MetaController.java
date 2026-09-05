@@ -13,6 +13,19 @@ import java.util.List;
 @RequestMapping("/api/meta")
 public class MetaController {
 
+    @org.springframework.beans.factory.annotation.Value("${app.google.client-id:}")
+    private String googleClientId;
+
+    /** Null when Google sign-in is not configured, so the client can hide the button. */
+    public record AuthConfig(String googleClientId) {
+    }
+
+    @GetMapping("/auth-config")
+    public AuthConfig authConfig() {
+        return new AuthConfig(
+                googleClientId == null || googleClientId.isBlank() ? null : googleClientId);
+    }
+
     public record BloodGroupInfo(String group, List<String> canReceiveFrom) {
     }
 

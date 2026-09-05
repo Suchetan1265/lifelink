@@ -9,5 +9,7 @@ public record MeResponse(
         String phone,
         Role role,
         UserStatus status,
-        String name) {
+        String name,
+        /** False for a Google account whose donor details are not filled in yet. */
+        boolean profileComplete) {
 }

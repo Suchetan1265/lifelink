@@ -16,7 +16,7 @@ export default function RequireRole({ roles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   if (roles && !roles.includes(user.role)) {
-    return <Navigate to={homePathFor(user.role)} replace />;
+    return <Navigate to={homePathFor(user.role, user.profileComplete)} replace />;
   }
   return <Outlet />;
 }

@@ -145,7 +145,16 @@ public class AuthService {
             case BLOOD_BANK -> bloodBankRepository.findByUserId(userId).map(BloodBank::getName).orElse(null);
             case ADMIN -> null;
         };
-        return new MeResponse(user.getId(), user.getEmail(), user.getPhone(), user.getRole(), user.getStatus(), name);
+        // A Google sign-in creates the account before the donor details exist.
+        boolean profileComplete = user.getRole() != Role.DONOR || name != null;
+        return new MeResponse(user.getId(), user.getEmail(), user.getPhone(),
+                user.getRole(), user.getStatus(), name, profileComplete);
+    }
+
+    /** Issues a session for an already-authenticated user (see GoogleAuthService). */
+    @Transactional
+    public TokenResponse issueTokensFor(User user) {
+        return issueTokens(user);
     }
 
     private User createUser(String email, String phone, String rawPassword, Role role, UserStatus status) {

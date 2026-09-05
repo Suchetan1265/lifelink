@@ -1,6 +1,9 @@
 package com.lifelink.auth;
 
+import com.lifelink.auth.dto.ForgotPasswordRequest;
+import com.lifelink.auth.dto.GoogleSignInRequest;
 import com.lifelink.auth.dto.LoginRequest;
+import com.lifelink.auth.dto.ResetPasswordRequest;
 import com.lifelink.auth.dto.MeResponse;
 import com.lifelink.auth.dto.RefreshRequest;
 import com.lifelink.auth.dto.RegisterBloodBankRequest;
@@ -24,6 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final GoogleAuthService googleAuthService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register/donor")
     @ResponseStatus(HttpStatus.CREATED)
@@ -46,6 +51,24 @@ public class AuthController {
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google")
+    public TokenResponse google(@Valid @RequestBody GoogleSignInRequest request) {
+        return googleAuthService.signIn(request.credential());
+    }
+
+    /** Always accepted, so the endpoint cannot be used to discover who has an account. */
+    @PostMapping("/password/forgot")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+    }
+
+    @PostMapping("/password/reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.reset(request.token(), request.newPassword());
     }
 
     @PostMapping("/refresh")

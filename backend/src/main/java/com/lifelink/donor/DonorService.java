@@ -10,6 +10,7 @@ import com.lifelink.donor.dto.UpdateDonorProfileRequest;
 import com.lifelink.redis.DonorGeoService;
 import com.lifelink.request.MatchingService;
 import com.lifelink.request.RequestMatchRepository;
+import com.lifelink.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,6 +33,7 @@ public class DonorService {
     private final DonationRepository donationRepository;
     private final DonorGeoService donorGeoService;
     private final MatchingService matchingService;
+    private final UserRepository userRepository;
 
     /** Cached as {@code donor:{id}:profile} for an hour (spec §7). */
     @Cacheable(cacheNames = DONOR_CACHE, key = "#userId + ':profile'")
@@ -40,17 +42,29 @@ public class DonorService {
         return DonorProfileResponse.from(findDonor(userId));
     }
 
-    /** A moved donor or a corrected blood group has to move in the GEO sets too. */
+    /**
+     * Creates the profile if it does not exist yet, which is the case for an
+     * account made by a Google sign-in: the identity arrives before the blood
+     * group, location and travel radius do.
+     *
+     * <p>A moved donor or a corrected blood group has to move in the GEO sets too.
+     */
     @CachePut(cacheNames = DONOR_CACHE, key = "#userId + ':profile'")
     @Transactional
     public DonorProfileResponse updateProfile(Long userId, UpdateDonorProfileRequest request) {
-        Donor donor = findDonor(userId);
+        Donor donor = donorRepository.findById(userId).orElseGet(() -> {
+            Donor created = new Donor();
+            created.setUser(userRepository.getReferenceById(userId));
+            created.setAvailable(false);
+            return created;
+        });
         donor.setFullName(request.fullName());
         donor.setBloodGroup(request.bloodGroup());
         donor.setLat(request.lat());
         donor.setLng(request.lng());
         donor.setCity(request.city());
         donor.setRadiusKm(request.radiusKm());
+        donorRepository.save(donor);
         donorGeoService.index(donor);
         return DonorProfileResponse.from(donor);
     }

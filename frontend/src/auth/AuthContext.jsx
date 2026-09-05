@@ -43,6 +43,13 @@ export function AuthProvider({ children }) {
     [startSession],
   );
 
+  /** Re-reads the profile, e.g. after a Google user fills in their donor details. */
+  const refresh = useCallback(async () => {
+    const profile = await auth.me();
+    setUser(profile);
+    return profile;
+  }, []);
+
   const signOutRemotely = useCallback(async () => {
     const refreshToken = tokenStore.refresh();
     if (refreshToken) {
@@ -53,8 +60,8 @@ export function AuthProvider({ children }) {
   }, [signOut]);
 
   const value = useMemo(
-    () => ({ user, loading, signIn, signOut: signOutRemotely, startSession }),
-    [user, loading, signIn, signOutRemotely, startSession],
+    () => ({ user, loading, signIn, signOut: signOutRemotely, startSession, refresh }),
+    [user, loading, signIn, signOutRemotely, startSession, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -68,8 +75,16 @@ export function useAuth() {
   return context;
 }
 
-/** Where each role lands after signing in. */
-export function homePathFor(role) {
+/**
+ * Where a signed-in user belongs. A Google account exists before its donor
+ * details do, so those users go and finish setting up first.
+ */
+export function homePathFor(role, profileComplete = true) {
+  if (role === 'DONOR' && !profileComplete) return '/donor/complete-profile';
+  return homePathForRole(role);
+}
+
+function homePathForRole(role) {
   switch (role) {
     case 'DONOR':
       return '/donor';

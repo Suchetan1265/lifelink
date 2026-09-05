@@ -765,6 +765,35 @@ input[type="range"]:focus { box-shadow: none; }
 .input-wrap .reveal:hover { color: var(--ink); background: var(--surface-sunk); }
 
 .field { margin-bottom: 0.9rem; }
+
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+
+.forgot {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.forgot:hover { text-decoration: underline; }
+
+/* Divider above the third-party sign-in options. */
+.or-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 1.5rem 0 1.1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.or-divider::before, .or-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.google-button { display: flex; justify-content: center; }
+.google-button > div { max-width: 100%; }
 .field > .field-label { margin-bottom: 0.35rem; }
 
 .button.pill { border-radius: 10px; padding: 0.8rem 1.15rem; font-size: 0.98rem; }

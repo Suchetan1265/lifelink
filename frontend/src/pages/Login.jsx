@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { errorMessage } from '../api/client';
 import { homePathFor, useAuth } from '../auth/AuthContext';
 import AuthLayout from '../components/AuthLayout';
+import GoogleButton from '../components/GoogleButton';
+import { auth } from '../api/endpoints';
 
 export default function Login() {
-  const { user, loading, signIn } = useAuth();
+  const { user, loading, signIn, startSession } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,7 +18,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return <p className="muted center">Loading…</p>;
-  if (user) return <Navigate to={homePathFor(user.role)} replace />;
+  if (user) return <Navigate to={homePathFor(user.role, user.profileComplete)} replace />;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -24,13 +26,26 @@ export default function Login() {
     setSubmitting(true);
     try {
       const profile = await signIn(email, password);
-      navigate(location.state?.from?.pathname || homePathFor(profile.role), { replace: true });
+      navigate(location.state?.from?.pathname || homePathFor(profile.role, profile.profileComplete), { replace: true });
     } catch (loginError) {
       setError(errorMessage(loginError, 'Could not sign in'));
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleGoogle = useCallback(
+    async (credential) => {
+      setError(null);
+      try {
+        const profile = await startSession(await auth.google(credential));
+        navigate(homePathFor(profile.role, profile.profileComplete), { replace: true });
+      } catch (googleError) {
+        setError(errorMessage(googleError, 'Could not sign in with Google'));
+      }
+    },
+    [navigate, startSession],
+  );
 
   return (
     <AuthLayout>
@@ -72,9 +87,14 @@ export default function Login() {
         </div>
 
         <div className="field">
-          <label className="field-label" htmlFor="password">
-            Password
-          </label>
+          <div className="label-row">
+            <label className="field-label" htmlFor="password">
+              Password
+            </label>
+            <Link className="forgot" to="/forgot-password">
+              Forgot password?
+            </Link>
+          </div>
           <span className="input-wrap">
             <svg
               className="lead-icon"
@@ -132,6 +152,8 @@ export default function Login() {
           {!submitting && <span aria-hidden="true">&rarr;</span>}
         </button>
       </form>
+
+      <GoogleButton onCredential={handleGoogle} disabled={submitting} />
 
       <p className="auth-alt">
         Don&rsquo;t have an account? <Link to="/register">Sign up</Link>
