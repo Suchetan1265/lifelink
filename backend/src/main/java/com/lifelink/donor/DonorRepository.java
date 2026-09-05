@@ -45,4 +45,14 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
             @Param("lng") double lng,
             @Param("groups") Collection<String> groups,
             @Param("limit") int limit);
+
+    long countByAvailableTrue();
+
+    /** [bloodGroup, count] rows for the admin dashboard. */
+    @Query("SELECT d.bloodGroup, COUNT(d) FROM Donor d GROUP BY d.bloodGroup ORDER BY COUNT(d) DESC")
+    List<Object[]> countGroupedByBloodGroup();
+
+    /** [city, count] rows for the admin dashboard. */
+    @Query("SELECT d.city, COUNT(d) FROM Donor d GROUP BY d.city ORDER BY COUNT(d) DESC")
+    List<Object[]> countGroupedByCity();
 }

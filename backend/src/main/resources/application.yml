@@ -41,6 +41,11 @@ app:
     secret: ${JWT_SECRET:lifelink-dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
     access-ttl-minutes: 15
     refresh-ttl-days: 7
+  admin:
+    # Bootstraps the first ADMIN account when none exists (see AdminBootstrap).
+    # Dev-only defaults -- set ADMIN_EMAIL / ADMIN_PASSWORD for anything real.
+    email: ${ADMIN_EMAIL:admin@lifelink.local}
+    password: ${ADMIN_PASSWORD:admin-dev-only-change-me}
 
 server:
   port: 8080
