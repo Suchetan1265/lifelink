@@ -141,6 +141,16 @@
     padding-top: 3rem;
   }
 
+  nav .home {
+    display: block;
+    font-weight: 650;
+    color: var(--accent);
+    text-decoration: none;
+    margin-bottom: 1.25rem;
+  }
+  nav .home::before { content: "← "; }
+  nav .home:hover { text-decoration: underline; }
+
   nav h2 {
     font-size: 0.7rem;
     font-weight: 650;
@@ -502,6 +512,7 @@
   </header>
 
   <nav>
+    <a class="home" href="index.html">All documents</a>
     <h2>Contents</h2>
     <ol>
       <li><a href="#roles">The four roles</a></li>
@@ -1023,8 +1034,8 @@
 
   <footer>
     <p>
-      LifeLink &middot; blood donor and hospital matching. Statuses and timings in this guide match
-      the behaviour of the running system.
+      LifeLink &middot; see also the <a href="tdd.html">technical design</a> and the
+      <a href="https://github.com/Suchetan1265/lifelink">source repository</a>.
     </p>
   </footer>
 

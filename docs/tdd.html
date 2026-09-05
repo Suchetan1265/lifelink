@@ -1,0 +1,935 @@
+<title>LifeLink Technical Design</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --ground: #f5f3f3; --surface: #ffffff; --surface-sunk: #efebec;
+    --ink: #191517; --ink-soft: #443c3f; --muted: #6d6367;
+    --line: #e5dedf; --line-strong: #d3c9cb;
+    --accent: #b3121b; --accent-soft: #f7e9ea;
+    --state-open: #1d4ed8; --state-progress: #4f46e5; --state-good: #157f3d;
+    --state-warn: #a35a09; --state-bad: #c0271f; --state-off: #6d6367;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
+    --measure: 68ch;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131011; --surface: #1b1718; --surface-sunk: #241f20;
+      --ink: #f1eced; --ink-soft: #cdc4c6; --muted: #a09598;
+      --line: #2e2829; --line-strong: #413a3c;
+      --accent: #f26761; --accent-soft: #33191a;
+      --state-open: #7aa2f7; --state-progress: #a5a0f5; --state-good: #5fc98a;
+      --state-warn: #e0a458; --state-bad: #f0766c; --state-off: #a09598;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131011; --surface: #1b1718; --surface-sunk: #241f20;
+    --ink: #f1eced; --ink-soft: #cdc4c6; --muted: #a09598;
+    --line: #2e2829; --line-strong: #413a3c;
+    --accent: #f26761; --accent-soft: #33191a;
+    --state-open: #7aa2f7; --state-progress: #a5a0f5; --state-good: #5fc98a;
+    --state-warn: #e0a458; --state-bad: #f0766c; --state-off: #a09598;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--serif); font-size: 16.5px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    display: grid; grid-template-columns: 16rem minmax(0, 1fr);
+    gap: 3rem; max-width: 72rem; margin: 0 auto; padding: 0 2rem 6rem;
+  }
+  .masthead { grid-column: 1 / -1; padding: 3.5rem 0 2rem; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--sans); font-size: 0.72rem; font-weight: 650;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.8rem;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 700; font-size: clamp(2.1rem, 5vw, 3rem);
+    letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 0.9rem; text-wrap: balance;
+  }
+  .standfirst { max-width: var(--measure); font-size: 1.1rem; color: var(--ink-soft); margin: 0; }
+  .meta {
+    font-family: var(--mono); font-size: 0.76rem; color: var(--muted);
+    margin: 1.5rem 0 0; display: flex; gap: 1.5rem; flex-wrap: wrap;
+  }
+
+  nav { position: sticky; top: 2rem; align-self: start; font-family: var(--sans); font-size: 0.84rem; padding-top: 2.5rem; }
+  nav h2 { font-size: 0.7rem; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.7rem; }
+  nav ol { list-style: none; margin: 0 0 1.5rem; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; counter-reset: nav; }
+  nav li { counter-increment: nav; }
+  nav a { color: var(--ink-soft); text-decoration: none; border-left: 2px solid var(--line); padding: 0.12rem 0 0.12rem 0.7rem; display: block; }
+  nav a::before { content: counter(nav) ". "; color: var(--muted); font-variant-numeric: tabular-nums; }
+  nav a:hover, nav a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+  nav .home { border: none; padding-left: 0; font-weight: 650; color: var(--accent); margin-bottom: 1.25rem; }
+  nav .home::before { content: "← "; }
+
+  main { padding-top: 2.5rem; min-width: 0; }
+  section + section { margin-top: 3.5rem; }
+  h2 {
+    font-family: var(--sans); font-weight: 700; font-size: 1.6rem; letter-spacing: -0.022em;
+    line-height: 1.15; margin: 0 0 0.75rem; scroll-margin-top: 1.5rem; text-wrap: balance;
+  }
+  h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 0.5rem; }
+  h3 { font-family: var(--sans); font-weight: 650; font-size: 1.05rem; margin: 2rem 0 0.55rem; text-wrap: balance; }
+  h4 { font-family: var(--sans); font-weight: 650; font-size: 0.94rem; margin: 1.5rem 0 0.4rem; }
+  p, li { max-width: var(--measure); }
+  p { margin: 0 0 0.9rem; }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin-bottom: 0.35rem; }
+  a { color: var(--accent); }
+  strong { font-weight: 700; color: var(--ink); }
+  .lede { font-size: 1.03rem; color: var(--ink-soft); margin-bottom: 1.5rem; }
+
+  code {
+    font-family: var(--mono); font-size: 0.85em; background: var(--surface-sunk);
+    padding: 0.1em 0.36em; border-radius: 3px;
+  }
+  pre {
+    font-family: var(--mono); font-size: 0.8rem; line-height: 1.5;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 1rem 1.1rem; overflow-x: auto; margin: 1.25rem 0;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+  table {
+    width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 0.86rem;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  th, td { text-align: left; padding: 0.58rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-size: 0.69rem; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); background: var(--surface-sunk); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.key { font-family: var(--mono); font-size: 0.8rem; white-space: nowrap; color: var(--accent); font-weight: 600; }
+
+  .chip {
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+    padding: 0.06em 0.5em; border: 1px solid currentColor; border-radius: 2em; white-space: nowrap;
+  }
+  .s-open { color: var(--state-open); } .s-progress { color: var(--state-progress); }
+  .s-good { color: var(--state-good); } .s-warn { color: var(--state-warn); }
+  .s-bad { color: var(--state-bad); } .s-off { color: var(--state-off); }
+
+  .note {
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    padding: 0.95rem 1.1rem; margin: 1.25rem 0;
+  }
+  .note p { margin: 0; font-size: 0.94rem; }
+  .note p + p { margin-top: 0.55rem; }
+
+  /* Story cards */
+  .story {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 1rem 1.15rem; margin: 0.9rem 0;
+  }
+  .story-head { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .story-id {
+    font-family: var(--mono); font-size: 0.74rem; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); padding: 0.1rem 0.45rem; border-radius: 3px;
+  }
+  .story-head h4 { margin: 0; font-size: 0.98rem; }
+  .story p { font-size: 0.93rem; margin: 0 0 0.5rem; max-width: none; }
+  .story p:last-child { margin-bottom: 0; }
+  .ac { font-family: var(--sans); font-size: 0.87rem; color: var(--ink-soft); margin: 0; padding-left: 1.1rem; }
+  .ac li { max-width: none; margin-bottom: 0.25rem; }
+  .story .label {
+    font-family: var(--sans); font-size: 0.7rem; font-weight: 650; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); display: block; margin: 0.6rem 0 0.25rem;
+  }
+
+  footer {
+    grid-column: 1 / -1; margin-top: 4rem; padding-top: 1.25rem; border-top: 1px solid var(--line);
+    font-family: var(--sans); font-size: 0.82rem; color: var(--muted);
+  }
+  footer p { max-width: none; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 900px) {
+    .page { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 1.25rem 4rem; }
+    nav { position: static; padding-top: 1.75rem; border-bottom: 1px solid var(--line); padding-bottom: 1.25rem; }
+    main { padding-top: 2rem; }
+    .masthead { padding-top: 2.25rem; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Technical Design Document</p>
+    <h1>LifeLink</h1>
+    <p class="standfirst">
+      A blood donor and hospital matching platform. This document records what was built, the
+      technology it rests on, how the pieces behave when they fail, and every story that makes up
+      the epic.
+    </p>
+    <p class="meta">
+      <span>Status: implemented</span>
+      <span>Backend tests: 43 passing</span>
+      <span>Spring Boot 3.5 &middot; Java 17</span>
+    </p>
+  </header>
+
+  <nav>
+    <a class="home" href="index.html">All documents</a>
+    <h2>Sections</h2>
+    <ol>
+      <li><a href="#context">Problem and scope</a></li>
+      <li><a href="#stack">Technology choices</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#data">Data model</a></li>
+      <li><a href="#lifecycle">Request state machine</a></li>
+      <li><a href="#matching">Matching engine</a></li>
+      <li><a href="#cache">Caching and Redis</a></li>
+      <li><a href="#queues">Messaging and RabbitMQ</a></li>
+      <li><a href="#jobs">Scheduled jobs</a></li>
+      <li><a href="#security">Authentication</a></li>
+      <li><a href="#epics">Epics and stories</a></li>
+      <li><a href="#failure">Failure behaviour</a></li>
+      <li><a href="#testing">Testing strategy</a></li>
+      <li><a href="#frontend">Frontend</a></li>
+      <li><a href="#open">Open items</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="context">
+      <h2><span class="num">1</span>Problem and scope</h2>
+      <p class="lede">
+        Blood is perishable, demand is spiky, and the people who can supply it are scattered and
+        mostly unaware they are needed.
+      </p>
+      <p>
+        When a hospital runs short, the current process is phone calls: to blood banks, to donor
+        registries, to individuals. Nobody knows who is nearby, who is medically eligible today, or
+        who has already committed to somewhere else. LifeLink closes that gap by holding donor
+        availability and location as live state, and turning a hospital's shortage into targeted
+        notifications within seconds.
+      </p>
+
+      <h3>In scope</h3>
+      <ul>
+        <li>Donor registration, availability, and the 90-day recovery period between donations.</li>
+        <li>Hospital requests with urgency, automatic donor matching, and a confirm-then-record handover.</li>
+        <li>Blood bank stock and an escalation path for requests no donor takes in time.</li>
+        <li>Administrative verification of hospitals and blood banks before they can act.</li>
+        <li>In-app, email, SMS and push notification channels.</li>
+      </ul>
+
+      <h3>Explicitly out of scope</h3>
+      <ul>
+        <li><strong>Medical screening.</strong> Eligibility here is the 90-day interval only. Real
+          deferral criteria — medication, travel, weight, haemoglobin — belong to the collecting
+          clinician, not this system.</li>
+        <li><strong>Blood typing.</strong> The donor's stated group is trusted; the platform never
+          verifies it and the collecting site must.</li>
+        <li><strong>Cold chain and logistics.</strong> Units are counted, not tracked.</li>
+        <li><strong>Payments.</strong> Donation is unpaid.</li>
+      </ul>
+
+      <div class="note">
+        <p><strong>The safety posture.</strong> LifeLink is a coordination layer, not a clinical
+          one. Every irreversible physical act — drawing blood, releasing stock — is performed and
+          recorded by a verified organisation, and the audit trail records who did what and when.</p>
+      </div>
+    </section>
+
+    <section id="stack">
+      <h2><span class="num">2</span>Technology choices</h2>
+      <p class="lede">Each choice is recorded with the reason it was made, because the reason is
+        what a future maintainer needs.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Choice</th><th>Why this one</th></tr></thead>
+          <tbody>
+            <tr><td class="key">Runtime</td><td>Java 17, Spring Boot 3.5</td>
+              <td>Records, sealed switch expressions and pattern matching make the domain model terse; Boot supplies the transaction, security and scheduling plumbing.</td></tr>
+            <tr><td class="key">Database</td><td>PostgreSQL 16</td>
+              <td>Source of truth. Chosen over MySQL for partial indexes, <code>TIMESTAMPTZ</code>, and trigonometric functions used by the fallback distance query.</td></tr>
+            <tr><td class="key">Migrations</td><td>Flyway</td>
+              <td>Schema is versioned and owned by migrations; Hibernate runs <code>ddl-auto: validate</code> so drift fails at boot rather than in production.</td></tr>
+            <tr><td class="key">Persistence</td><td>Spring Data JPA / Hibernate</td>
+              <td>Entity mapping for the domain; native SQL where the query is genuinely relational (distance, aggregates).</td></tr>
+            <tr><td class="key">Cache and geo index</td><td>Redis 6+</td>
+              <td>GEO sets answer "nearest compatible donors" in one round trip. Also holds the rate-limit counter and two read caches.</td></tr>
+            <tr><td class="key">Messaging</td><td>RabbitMQ</td>
+              <td>Topic exchange fans one notification to email, SMS and push independently, with per-channel dead-letter queues.</td></tr>
+            <tr><td class="key">Scheduling</td><td>Quartz</td>
+              <td>Escalation, expiry and eligibility jobs. In-memory store, since all three are catch-up jobs that re-read whatever is still overdue.</td></tr>
+            <tr><td class="key">Authentication</td><td>JWT (HS256) + rotating refresh tokens</td>
+              <td>Stateless access tokens keep the API horizontally scalable; refresh tokens are stored hashed so a database leak does not yield usable sessions.</td></tr>
+            <tr><td class="key">Frontend</td><td>React 18, Vite, TanStack Query</td>
+              <td>Query handles polling and cache invalidation, which is most of the client's job here.</td></tr>
+            <tr><td class="key">Maps</td><td>Leaflet + OpenStreetMap</td>
+              <td>No API key, no billing account, and Nominatim covers geocoding for the location picker.</td></tr>
+            <tr><td class="key">Charts</td><td>Recharts</td>
+              <td>Admin statistics only; code-split so it never loads for other roles.</td></tr>
+            <tr><td class="key">Tests</td><td>JUnit 5, embedded PostgreSQL and Redis</td>
+              <td>Real servers rather than H2 or mocks, so migrations and native SQL are exercised as written. No Docker required.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2><span class="num">3</span>Architecture</h2>
+      <p class="lede">
+        One Spring Boot application, three supporting services, and a strict rule about which one is
+        authoritative.
+      </p>
+
+<pre><code>          Donor / Hospital / Blood bank / Admin
+                        │  HTTPS, Bearer JWT
+                        ▼
+        ┌───────────────────────────────────┐
+        │        Spring Boot API            │
+        │  controllers → services → repos   │
+        │  JwtAuthFilter, @PreAuthorize     │
+        └───┬───────────┬───────────┬───────┘
+            │           │           │
+            ▼           ▼           ▼
+     ┌────────────┐ ┌────────┐ ┌──────────┐
+     │ PostgreSQL │ │ Redis  │ │ RabbitMQ │
+     │  (truth)   │ │ (index)│ │ (fan-out)│
+     └────────────┘ └────────┘ └────┬─────┘
+                                    │
+                      ┌─────────────┼─────────────┐
+                      ▼             ▼             ▼
+                 EmailWorker    SmsWorker    PushWorker
+                      │             │             │
+                      └──── dead-letter queues ───┘
+
+     Quartz ── escalation (15m) ── expiry (15m) ── eligibility (daily)</code></pre>
+
+      <h3>The load-bearing rule</h3>
+      <p>
+        <strong>PostgreSQL is the only authority.</strong> Redis is a derived index that can be
+        rebuilt from it at any time, and RabbitMQ carries copies of facts already committed. This
+        single rule is what lets every other component fail without taking the platform with it, and
+        it is why the GEO index is rebuilt from the database on every startup.
+      </p>
+
+      <h3>Package layout</h3>
+      <p>
+        Organised by feature rather than by layer, so a change to blood banks touches one directory:
+        <code>admin</code>, <code>auth</code>, <code>bloodbank</code>, <code>common</code>,
+        <code>donor</code>, <code>hospital</code>, <code>job</code>, <code>messaging</code>,
+        <code>notification</code>, <code>redis</code>, <code>request</code>, <code>security</code>,
+        <code>user</code>.
+      </p>
+    </section>
+
+    <section id="data">
+      <h2><span class="num">4</span>Data model</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Table</th><th>Holds</th><th>Notable constraints</th></tr></thead>
+          <tbody>
+            <tr><td class="key">users</td><td>Account, role, status</td><td>Unique email; role is one of DONOR, HOSPITAL, BLOOD_BANK, ADMIN.</td></tr>
+            <tr><td class="key">refresh_tokens</td><td>Hashed refresh tokens</td><td>SHA-256 of the token, never the token itself.</td></tr>
+            <tr><td class="key">donors</td><td>Group, location, radius, availability, cooldown</td><td>PK is the user id; partial index on <code>blood_group WHERE available</code>.</td></tr>
+            <tr><td class="key">hospitals</td><td>Name, licence, location, verified</td><td>One per user.</td></tr>
+            <tr><td class="key">blood_banks</td><td>Name, location, verified</td><td>One per user.</td></tr>
+            <tr><td class="key">blood_inventory</td><td>Units per group per bank</td><td>Unique on (bank, group).</td></tr>
+            <tr><td class="key">requests</td><td>Group, units, urgency, needed-by, status</td><td>Indexed on (status, needed_by) for the jobs; <code>accepted_bank_id</code> records which bank took an escalation.</td></tr>
+            <tr><td class="key">request_matches</td><td>Donor's link to a request and their response</td><td>Unique on (request, donor); indexed on (donor, status).</td></tr>
+            <tr><td class="key">donations</td><td>Completed donation</td><td>Check constraint: exactly one of donor or blood bank.</td></tr>
+            <tr><td class="key">request_status_history</td><td>Audit trail</td><td>Every transition, with actor and reason.</td></tr>
+            <tr><td class="key">notifications</td><td>In-app messages</td><td>Indexed on (user, read).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Migrations</h3>
+      <ul>
+        <li><code>V1__init.sql</code> — the schema above, minus the accepting bank.</li>
+        <li><code>V2__escalation_accepting_bank.sql</code> — adds <code>requests.accepted_bank_id</code>,
+          so only the bank that accepted an escalation can fulfil it and the hospital can see who is covering.</li>
+      </ul>
+    </section>
+
+    <section id="lifecycle">
+      <h2><span class="num">5</span>Request state machine</h2>
+      <p class="lede">Every status change goes through one method, which rejects illegal
+        transitions, stamps timestamps and writes the audit row.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>From</th><th>Event</th><th>To</th><th>Triggered by</th></tr></thead>
+          <tbody>
+            <tr><td><span class="chip s-open">RAISED</span></td><td>DONOR_ACCEPTED</td><td><span class="chip s-progress">MATCHED</span></td><td>Donor accepts or volunteers</td></tr>
+            <tr><td><span class="chip s-progress">MATCHED</span></td><td>HOSPITAL_CONFIRMED</td><td><span class="chip s-progress">CONFIRMED</span></td><td>Hospital picks a donor</td></tr>
+            <tr><td><span class="chip s-progress">CONFIRMED</span></td><td>DONATION_RECORDED</td><td><span class="chip s-good">FULFILLED</span></td><td>Hospital or bank records it</td></tr>
+            <tr><td>RAISED / MATCHED</td><td>ESCALATE_TIMEOUT</td><td><span class="chip s-warn">ESCALATED</span></td><td>Quartz, deadline passed</td></tr>
+            <tr><td><span class="chip s-warn">ESCALATED</span></td><td>BANK_ACCEPTED</td><td><span class="chip s-progress">CONFIRMED</span></td><td>Blood bank accepts</td></tr>
+            <tr><td>RAISED / MATCHED / ESCALATED</td><td>NEEDED_BY_PASSED</td><td><span class="chip s-bad">EXPIRED</span></td><td>Quartz, needed-by passed</td></tr>
+            <tr><td>any non-terminal</td><td>CANCEL</td><td><span class="chip s-off">CANCELLED</span></td><td>Hospital, with a reason</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Design note: why not Spring State Machine</h3>
+      <p>
+        The dependency is present but unused. The transition table is a Java enum where each event
+        carries its legal source states and its target, and <code>RequestLifecycleService</code>
+        validates against it in about forty lines. Spring State Machine would add a configuration
+        class, a persister and a runtime per request to express the same table. <strong>This is a
+        deliberate deviation from the original specification</strong>, recorded here rather than
+        hidden: either adopt the library properly or drop the dependency.
+      </p>
+
+      <h3>Guards</h3>
+      <ul>
+        <li>A hospital cannot confirm a donor whose match is not <code>ACCEPTED</code>.</li>
+        <li>A donation cannot be recorded against a donor who was not <code>CONFIRMED</code>.</li>
+        <li>A blood bank cannot release stock it does not hold, and only the bank that accepted the escalation may fulfil it.</li>
+        <li>A donor holds at most one live commitment across the whole platform.</li>
+      </ul>
+    </section>
+
+    <section id="matching">
+      <h2><span class="num">6</span>Matching engine</h2>
+      <p class="lede">
+        Two entry points — a request being raised, and a donor becoming available — reaching the
+        same rules.
+      </p>
+
+      <h3>Push: when a request is raised</h3>
+      <ol>
+        <li>Compute the compatible donor groups for the requested group.</li>
+        <li><code>GEORADIUS</code> each group's set around the hospital, merge and sort by distance.</li>
+        <li>Narrow the candidate ids in PostgreSQL: still available, still eligible, and
+          <em>not already tied to an active request</em> — a fact only the database holds.</li>
+        <li>Drop anyone whose own travel radius does not reach the hospital.</li>
+        <li>Take the nearest 20, write <code>request_matches</code> rows, notify each.</li>
+      </ol>
+
+      <div class="note">
+        <p><strong>Redis narrows, PostgreSQL decides.</strong> The geo search is the expensive part
+          and belongs in Redis; the correctness filters stay in the database. If Redis is
+          unreachable, or returns nothing because it was flushed, the whole match falls back to a
+          Haversine query in SQL.</p>
+      </div>
+
+      <h3>Pull: when a donor becomes available</h3>
+      <p>
+        Matching originally ran only at request creation, which meant a donor who registered or
+        switched availability on a minute later never heard about a request that was still open and
+        needed exactly their blood group. Turning availability on, or coming off cooldown, now
+        attaches the donor to the best open request they can reach — most urgent first, then
+        nearest, and only one.
+      </p>
+
+      <h3>Browse</h3>
+      <p>
+        Donors can also list every open request their group can serve inside their radius and
+        volunteer directly. Browsing deliberately ignores the availability toggle, because looking
+        at what is needed is how someone decides to switch it on.
+      </p>
+
+      <h3>Compatibility</h3>
+      <p>
+        Held in one enum with two derived views: <code>compatibleDonors()</code> answers "who can
+        supply this patient" for the push path, and <code>canDonateTo()</code> answers "who can this
+        donor help" for the browse path. Deriving the second from the first means the two can never
+        disagree.
+      </p>
+    </section>
+
+    <section id="cache">
+      <h2><span class="num">7</span>Caching and Redis</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Key</th><th>Type</th><th>TTL</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="key">donors:geo:{group}</td><td>GEO set</td><td>none</td><td>Available, eligible donors per blood group. The matching hot path.</td></tr>
+            <tr><td class="key">donor:{id}:profile</td><td>JSON</td><td>1 hour</td><td>The donor's own dashboard read.</td></tr>
+            <tr><td class="key">stats:admin</td><td>JSON</td><td>5 min</td><td>The admin dashboard aggregate, which is several grouped counts.</td></tr>
+            <tr><td class="key">rl:requests:{hospitalId}</td><td>Counter</td><td>1 hour</td><td>Rate limit: 10 requests per hospital per hour.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Write-through discipline</h3>
+      <p>
+        GEO set membership means "matchable right now". Four events can change that, and all four
+        write through immediately: the availability toggle, a profile edit that moves the donor or
+        corrects their group, a recorded donation starting the cooldown, and the daily eligibility
+        job ending it. A profile edit removes the donor from all eight sets before re-adding, so a
+        corrected blood group cannot leave a stale entry behind.
+      </p>
+
+      <h3>Cold start</h3>
+      <p>
+        <code>DonorGeoBootstrap</code> rebuilds every set from PostgreSQL on startup. Without it, a
+        flushed Redis would silently shrink the donor pool with no error anywhere — the most
+        dangerous failure mode in the system, because it looks like "no donors nearby".
+      </p>
+
+      <div class="note">
+        <p><strong>Deviation from spec.</strong> <code>donor:{id}:profile</code> was specified as a
+          cache for match ranking. Ranking has to reach PostgreSQL regardless, to exclude donors
+          already committed, so a profile cache would save nothing there. It caches the donor's own
+          dashboard read instead, which is a genuine hot path.</p>
+      </div>
+    </section>
+
+    <section id="queues">
+      <h2><span class="num">8</span>Messaging and RabbitMQ</h2>
+      <p class="lede">
+        One notification becomes up to three deliveries, each independently retryable.
+      </p>
+
+      <h3>Topology</h3>
+      <ul>
+        <li>Topic exchange <code>notifications</code>, routing keys <code>notify.email</code>, <code>notify.sms</code>, <code>notify.push</code>.</li>
+        <li>One durable queue per channel, each with a dead-letter exchange and its own <code>.dlq</code>.</li>
+        <li>Listener retry: 4 attempts, 2s initial interval, doubling, capped at 30s. Exhausted messages are rejected, not requeued, so they land on the dead-letter queue instead of looping.</li>
+      </ul>
+
+      <h3>Two decisions worth recording</h3>
+      <h4>Publishing waits for the commit</h4>
+      <p>
+        The notification row is written inside the business transaction; publishing happens on a
+        <code>@TransactionalEventListener</code> bound to after-commit. Without this, an operation
+        that rolls back after calling <code>notify()</code> would still send email about something
+        that never happened — reachable in practice, since several services notify before a
+        lifecycle transition that can throw.
+      </p>
+
+      <h4>Messages carry ids, not addresses</h4>
+      <p>
+        The payload is the notification id, user id, type, title and body. Workers resolve the
+        current email or phone at delivery time, which keeps stale contact details out of the queue
+        and keeps the matching hot path free of extra lookups when notifying twenty donors.
+      </p>
+
+      <h3>Channel policy</h3>
+      <p>
+        Email and push receive everything. SMS costs money, so it is reserved for types someone must
+        act on quickly: a new match, a confirmation, an escalation, a cancellation. The SMS worker
+        skips silently when no phone is on file.
+      </p>
+    </section>
+
+    <section id="jobs">
+      <h2><span class="num">9</span>Scheduled jobs</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Schedule</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td class="key">RequestEscalationJob</td><td>Every 15 min</td>
+              <td>Requests still RAISED or MATCHED past their urgency window move to ESCALATED; every verified bank within 50 km of the hospital is alerted.</td></tr>
+            <tr><td class="key">RequestExpiryJob</td><td>Every 15 min</td>
+              <td>Requests past <code>needed_by</code> and not yet fulfilled move to EXPIRED; the hospital is told.</td></tr>
+            <tr><td class="key">DonorEligibilityJob</td><td>Daily 00:05</td>
+              <td>Donors whose cooldown ends today are notified, returned to the GEO index, and matched to an open request if one fits.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Deadlines live in Java, not SQL</h3>
+      <p>
+        The per-urgency windows — CRITICAL 2h, HIGH 6h, NORMAL 24h — are fields on the
+        <code>Urgency</code> enum, and the jobs load non-terminal requests and filter in memory.
+        Encoding the intervals in SQL would duplicate them, and a new urgency level would then be
+        silently ignored by the job. The working set is bounded by open requests, not by table size.
+      </p>
+
+      <p>
+        Misfires are handled with <em>next-with-remaining-count</em>: a window missed during
+        downtime is not replayed, because all three jobs are catch-up by nature — they re-read
+        whatever is still overdue.
+      </p>
+    </section>
+
+    <section id="security">
+      <h2><span class="num">10</span>Authentication and authorisation</h2>
+
+      <ul>
+        <li><strong>Access token</strong> — JWT, HS256, 15 minutes, carrying subject, role and email.</li>
+        <li><strong>Refresh token</strong> — 256 bits of randomness, 7 days, stored as a SHA-256 hash. Presenting one revokes it and issues a fresh pair, so a stolen token is usable at most once before the legitimate holder's next refresh fails visibly.</li>
+        <li><strong>Passwords</strong> — BCrypt.</li>
+        <li><strong>Authorisation</strong> — a stateless filter populates the security context; <code>@PreAuthorize</code> guards each controller by role, and services re-check ownership so a valid token for the wrong hospital still fails.</li>
+      </ul>
+
+      <h3>Verification as a gate</h3>
+      <p>
+        Donors are usable immediately; hospitals and blood banks are created <span class="chip s-warn">PENDING</span>
+        and refused until an administrator approves. Anyone can claim to be a hospital, and a
+        hospital can summon a stranger to an address — the gate is the control that makes the rest
+        of the platform safe to operate.
+      </p>
+
+      <h3>Secrets</h3>
+      <p>
+        <code>JWT_SECRET</code> has no default: the application refuses to start without it. A
+        default would be published in the repository, and any deployment that forgot to override it
+        could have tokens forged against it. Local convenience lives in an explicit <code>dev</code>
+        profile that cannot be active by accident.
+      </p>
+    </section>
+
+    <section id="epics">
+      <h2><span class="num">11</span>Epics and stories</h2>
+      <p class="lede">
+        The epic decomposed into stories, each with the acceptance criteria that were actually
+        implemented and tested.
+      </p>
+
+      <h3>E1 &middot; Identity and access</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E1-S1</span><h4>Register as a donor</h4></div>
+        <p>As someone willing to give blood, I want an account, so that hospitals can reach me.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Email, password, blood group, location and travel radius are captured; the account is active immediately.</li>
+          <li>Availability starts off — registering is not consent to be called today.</li>
+          <li>A duplicate email is rejected with 409.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E1-S2</span><h4>Register as an organisation</h4></div>
+        <p>As a hospital or blood bank, I want to register, so that I can use the platform once verified.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Account is created <span class="chip s-warn">PENDING</span>; sign-in works but privileged actions are refused with 403.</li>
+          <li>Hospitals must supply a licence number for the administrator to check.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E1-S3</span><h4>Sign in and stay signed in</h4></div>
+        <p>As any user, I want my session to survive longer than the access token, without staying valid forever if stolen.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Login returns a 15-minute access token and a 7-day refresh token.</li>
+          <li>Refresh rotates: the presented token is revoked and a new pair issued.</li>
+          <li>Logout revokes; a disabled account cannot refresh.</li>
+          <li>The client refreshes once on a 401 and retries, with concurrent 401s sharing one refresh.</li>
+        </ul>
+      </div>
+
+      <h3>E2 &middot; Donor lifecycle</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E2-S1</span><h4>Control availability</h4></div>
+        <p>As a donor, I want one switch that decides whether I can be called on.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Turning it on adds the donor to the GEO index; off removes them.</li>
+          <li>Turning it on also attaches them to the best open request they can reach, if any.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E2-S2</span><h4>See where I can donate</h4></div>
+        <p>As a donor, I want to see every open request I could serve, not only what I was sent.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Lists open requests my group can serve within my radius, most urgent first.</li>
+          <li>Works regardless of the availability toggle.</li>
+          <li>Volunteering counts as an acceptance and moves the request to MATCHED.</li>
+          <li>A second commitment is refused with 409 while one is live.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E2-S3</span><h4>Respond to a match</h4></div>
+        <p>As a donor, I want to accept or decline a request I was notified about.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>The first acceptance moves the request RAISED → MATCHED; the hospital is notified.</li>
+          <li>Responding twice is refused; responding to another donor's match is refused.</li>
+          <li>Declining leaves the request open to others.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E2-S4</span><h4>Recover between donations</h4></div>
+        <p>As a donor, I want the platform to know I cannot give again yet.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>A recorded donation sets last donation date and next eligible date 90 days out.</li>
+          <li>The donor leaves the GEO index and is not matched while on cooldown.</li>
+          <li>Eligibility shows days remaining; history lists past donations.</li>
+        </ul>
+      </div>
+
+      <h3>E3 &middot; Hospital request lifecycle</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E3-S1</span><h4>Raise a request</h4></div>
+        <p>As a hospital, I want to state what I need and how urgently.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Requires verification; unverified hospitals are refused with 403.</li>
+          <li>Matching runs synchronously and donors are notified on submit.</li>
+          <li>Capped at 10 per hospital per hour, returning 429 beyond that.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E3-S2</span><h4>Watch responses</h4></div>
+        <p>As a hospital, I want to see who was contacted and what they said.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Lists each donor with NOTIFIED / ACCEPTED / DECLINED and distance.</li>
+          <li>Polls every 10 seconds while the request is open; plots donors on a map.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E3-S3</span><h4>Confirm a donor</h4></div>
+        <p>As a hospital, I want to commit one specific person so they travel.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Only available for a donor whose match is ACCEPTED; otherwise 409.</li>
+          <li>Request moves to CONFIRMED; that donor receives address and needed-by time.</li>
+          <li>Other accepting donors are told the request is covered.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E3-S4</span><h4>Record the donation</h4></div>
+        <p>As a hospital, I want to record that blood was actually given.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Only after a donor is CONFIRMED; exactly one of donor or blood bank is supplied.</li>
+          <li>Writes the donation, closes the request FULFILLED, starts the donor's cooldown.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E3-S5</span><h4>Cancel, and see the trail</h4></div>
+        <p>As a hospital, I want to call it off, and later see exactly what happened.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Cancellation is allowed from any non-terminal state and requires a reason.</li>
+          <li>Committed donors are told not to come.</li>
+          <li>Every transition appears in a timeline with actor, reason and timestamp.</li>
+        </ul>
+      </div>
+
+      <h3>E4 &middot; Blood banks and escalation</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E4-S1</span><h4>Maintain inventory</h4></div>
+        <p>As a blood bank, I want to keep units per group current.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>All eight groups are always returned, zero-filled, so the editor is a full grid.</li>
+          <li>Updates upsert only the groups supplied.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E4-S2</span><h4>Take on an escalated request</h4></div>
+        <p>As a blood bank, I want to cover a request no donor took.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Only ESCALATED requests within 50 km are listed, with my stock for that group shown.</li>
+          <li>Accepting moves the request to CONFIRMED and locks it to my bank; a second bank gets 409.</li>
+          <li>Releasing stock decrements inventory and closes the request; insufficient stock is refused with nothing deducted.</li>
+          <li>A bank that did not accept cannot fulfil, receiving 403.</li>
+        </ul>
+      </div>
+
+      <h3>E5 &middot; Administration</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E5-S1</span><h4>Verify organisations</h4></div>
+        <p>As an administrator, I want to approve or reject registrations.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Queue filterable by hospital or blood bank; approving activates immediately.</li>
+          <li>Rejecting disables the account, revokes its refresh tokens and sends the reason.</li>
+          <li>Approving a rejected account reactivates it; approving twice returns 409.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E5-S2</span><h4>Watch platform health</h4></div>
+        <p>As an administrator, I want to know whether the platform is working.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Requests by status, fulfilment rate, average hours to fulfil, donors by group and city, pending verifications.</li>
+          <li>Cached 5 minutes; a Redis outage degrades to an uncached query rather than an error.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E5-S3</span><h4>Suspend an account</h4></div>
+        <p>As an administrator, I want to stop an abusive account.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Disabling blocks sign-in and revokes refresh tokens.</li>
+          <li>An administrator cannot change their own status.</li>
+        </ul>
+      </div>
+
+      <h3>E6 &middot; Notifications</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E6-S1</span><h4>Be told what happened</h4></div>
+        <p>As any user, I want to see what the platform has told me.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>In-app notifications written synchronously with the work that caused them.</li>
+          <li>Email, SMS and push published after the transaction commits.</li>
+          <li>A broker outage costs a delivery, never the in-app record.</li>
+        </ul>
+      </div>
+
+      <h3>E7 &middot; Client</h3>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E7-S1</span><h4>Give a location without typing coordinates</h4></div>
+        <p>As anyone registering, I want to set my location the way people actually think about places.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Browser geolocation, place-name search, or dropping a pin on a map.</li>
+          <li>The resolved address is shown back so the pin can be checked.</li>
+          <li>A refused permission or unreachable search explains the alternative rather than failing silently.</li>
+        </ul>
+      </div>
+
+      <div class="story">
+        <div class="story-head"><span class="story-id">E7-S2</span><h4>See only my role's screens</h4></div>
+        <p>As any user, I want an interface scoped to what I can actually do.</p>
+        <span class="label">Acceptance</span>
+        <ul class="ac">
+          <li>Routes are role-guarded on the client and enforced again on the server.</li>
+          <li>Signing in lands on that role's home screen.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="failure">
+      <h2><span class="num">12</span>Failure behaviour</h2>
+      <p class="lede">
+        What each dependency failing actually costs. This table is the design, not an afterthought.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure</th><th>Behaviour</th><th>Cost</th></tr></thead>
+          <tbody>
+            <tr><td class="key">Redis down</td><td>Matching falls back to the SQL Haversine query; caches miss through to the database; the rate limiter fails open.</td><td>Slower matching, no request cap for the outage.</td></tr>
+            <tr><td class="key">Redis flushed</td><td>Rebuilt from PostgreSQL at next startup; an empty GEO result triggers the SQL fallback rather than reporting no donors.</td><td>None, if the app restarts.</td></tr>
+            <tr><td class="key">RabbitMQ down</td><td>Publishing logs a warning and continues; in-app notifications are unaffected.</td><td>Email, SMS and push for the outage.</td></tr>
+            <tr><td class="key">Delivery keeps failing</td><td>Four attempts with backoff, then dead-lettered per channel.</td><td>Inspectable, not lost.</td></tr>
+            <tr><td class="key">PostgreSQL down</td><td>The application is down.</td><td>Total — and deliberately so, since nothing else is authoritative.</td></tr>
+            <tr><td class="key">Missing JWT_SECRET</td><td>Startup fails.</td><td>Deliberate: better than running on a published key.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The rate limiter failing open is worth naming as a decision rather than an accident. A
+        hospital with a genuine emergency must never be locked out because a cache is unavailable;
+        losing the cap for the length of an outage is the cheaper failure.
+      </p>
+    </section>
+
+    <section id="testing">
+      <h2><span class="num">13</span>Testing strategy</h2>
+      <p class="lede">43 backend tests, almost all of them booting the real application.</p>
+
+      <h3>Real infrastructure, no Docker</h3>
+      <p>
+        Tests run against an embedded PostgreSQL — a real server, not H2 — so Flyway migrations,
+        partial indexes and native SQL are exercised exactly as written. An embedded Redis covers
+        the cases that must prove the Redis path itself works.
+      </p>
+
+      <h3>Most tests run with Redis and RabbitMQ absent</h3>
+      <p>
+        This is deliberate. It keeps every degradation path continuously covered, so a change that
+        makes a Redis call non-optional fails the suite rather than surfacing during an outage.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Suite</th><th>Covers</th></tr></thead>
+          <tbody>
+            <tr><td class="key">AdminVerificationFlowTest</td><td>The verification gate end to end, double approval, rejection disabling sign-in, role isolation, stats.</td></tr>
+            <tr><td class="key">DonorJourneyTest</td><td>Availability, match, accept, confirm, fulfil, 90-day lockout, response guards.</td></tr>
+            <tr><td class="key">DonationOpportunityTest</td><td>Browse listing, compatibility, radius, urgency order, single-commitment rule.</td></tr>
+            <tr><td class="key">LateAvailabilityMatchingTest</td><td>A donor becoming available after the request was raised.</td></tr>
+            <tr><td class="key">BloodBankEscalationFlowTest</td><td>Escalation, offer radius, accept locking, stock guards, expiry.</td></tr>
+            <tr><td class="key">RedisMatchingAndLimitsTest</td><td>GEO membership, Redis-backed matching, rate limit, both caches.</td></tr>
+            <tr><td class="key">NotificationDispatchTest</td><td>After-commit publishing, and that a rollback publishes nothing.</td></tr>
+            <tr><td class="key">SeedDataTest</td><td>The demo dataset loads into a clean database.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <p><strong>Tests share one database, so each works in its own patch of the globe.</strong>
+          Once donors began claiming open requests eagerly, assertions started depending on
+          execution order. Giving each test method its own latitude band was the fix — cheaper and
+          more honest than truncating tables between tests.</p>
+      </div>
+    </section>
+
+    <section id="frontend">
+      <h2><span class="num">14</span>Frontend</h2>
+      <p class="lede">React 18 on Vite, with TanStack Query doing most of the work.</p>
+
+      <ul>
+        <li><strong>Session</strong> — tokens in local storage; an Axios interceptor refreshes once on 401 and retries. A single in-flight refresh is shared, since parallel 401s would otherwise each rotate the refresh token and leave all but one holding a revoked one.</li>
+        <li><strong>Polling</strong> — request detail every 10s while open, lists every 15–20s, notifications every 30s. Simpler than websockets for this volume.</li>
+        <li><strong>Guards</strong> — role-scoped routes, enforced again server-side.</li>
+        <li><strong>Bundle</strong> — Leaflet and Recharts are each used on one screen, so both are split out; the shared bundle is 147 kB, 50 kB gzipped.</li>
+      </ul>
+
+      <h3>Design language</h3>
+      <p>
+        A clinical crimson accent with red-biased neutrals, so greys sit with the accent rather than
+        fighting it. Status is encoded as a chip everywhere it appears, using one colour scale
+        shared between the app and this documentation. Illustration is drawn — an ECG trace on the
+        sign-in panel — rather than photographic, which keeps the payload small and the theme
+        coherent.
+      </p>
+    </section>
+
+    <section id="open">
+      <h2><span class="num">15</span>Open items</h2>
+
+      <ul>
+        <li><strong>Spring State Machine</strong> is an unused dependency. Adopt it properly or remove it.</li>
+        <li><strong>No frontend tests.</strong> The build, dev server and API path are verified; no screen is driven in a browser.</li>
+        <li><strong>Blood banks have no per-bank service radius</strong>, so escalation uses a fixed 50 km. A column and an editor would make it real.</li>
+        <li><strong>Notification delivery is not verified end to end</strong> against a live broker; the workers are covered by unit tests and the publisher by an integration test.</li>
+        <li><strong>Deployment</strong> is not automated. No pipeline, no infrastructure as code.</li>
+        <li><strong>Donor coordinates are exposed to the requesting hospital</strong> so it can plot who is coming. Defensible, but a real deployment should consider showing an approximate location until the donor is confirmed.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>
+      LifeLink technical design &middot; see also the
+      <a href="user-guide.html">user guide</a> and the
+      <a href="https://github.com/Suchetan1265/lifelink">source repository</a>.
+    </p>
+  </footer>
+
+</div>

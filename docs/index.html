@@ -1,0 +1,135 @@
+<title>LifeLink Documentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --ground: #f5f3f3; --surface: #ffffff; --surface-sunk: #efebec;
+    --ink: #191517; --ink-soft: #443c3f; --muted: #6d6367;
+    --line: #e5dedf; --accent: #b3121b; --accent-soft: #f7e9ea;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131011; --surface: #1b1718; --surface-sunk: #241f20;
+      --ink: #f1eced; --ink-soft: #cdc4c6; --muted: #a09598;
+      --line: #2e2829; --accent: #f26761; --accent-soft: #33191a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131011; --surface: #1b1718; --surface-sunk: #241f20;
+    --ink: #f1eced; --ink-soft: #cdc4c6; --muted: #a09598;
+    --line: #2e2829; --accent: #f26761; --accent-soft: #33191a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--serif); font-size: 17px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 3rem 1.5rem;
+  }
+  .wrap { width: 100%; max-width: 46rem; }
+
+  .drop { color: var(--accent); margin-bottom: 1.25rem; display: block; }
+
+  .eyebrow {
+    font-family: var(--sans); font-size: 0.72rem; font-weight: 650;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3rem);
+    letter-spacing: -0.03em; line-height: 1.03; margin: 0 0 0.9rem; text-wrap: balance;
+  }
+  .standfirst { font-size: 1.1rem; color: var(--ink-soft); margin: 0 0 2.5rem; max-width: 40ch; }
+
+  .docs { display: grid; gap: 1rem; margin-bottom: 2.5rem; }
+
+  a.doc {
+    display: block; padding: 1.35rem 1.5rem; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 8px; transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  a.doc:hover, a.doc:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgb(25 21 23 / 6%), 0 16px 32px rgb(25 21 23 / 8%);
+  }
+  a.doc h2 {
+    font-family: var(--sans); font-size: 1.15rem; font-weight: 650; letter-spacing: -0.02em;
+    margin: 0 0 0.3rem; color: var(--accent);
+  }
+  a.doc p { margin: 0; font-size: 0.96rem; color: var(--ink-soft); }
+  a.doc .who {
+    font-family: var(--mono); font-size: 0.72rem; color: var(--muted);
+    display: block; margin-top: 0.55rem; letter-spacing: 0.03em;
+  }
+
+  .repo {
+    font-family: var(--sans); font-size: 0.9rem; color: var(--muted);
+    padding-top: 1.5rem; border-top: 1px solid var(--line);
+  }
+  .repo a { color: var(--accent); font-weight: 600; }
+  .stack {
+    font-family: var(--mono); font-size: 0.74rem; color: var(--muted);
+    margin-top: 0.6rem; line-height: 1.7;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+
+<div class="wrap">
+
+  <svg class="drop" width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2.2c-.34 0-.65.17-.83.46C9.9 4.77 4.8 12.2 4.8 15.6a7.2 7.2 0 0 0 14.4 0c0-3.4-5.1-10.83-6.37-12.94a.97.97 0 0 0-.83-.46Zm0 3.05c2.2 3.5 5.2 8.6 5.2 10.35a5.2 5.2 0 0 1-10.4 0c0-1.75 3-6.85 5.2-10.35Z"/>
+  </svg>
+
+  <p class="eyebrow">Documentation</p>
+  <h1>LifeLink</h1>
+  <p class="standfirst">
+    A blood donor and hospital matching platform. Hospitals post what they need, nearby compatible
+    donors hear about it in seconds, and anything nobody confirms in time goes to the blood banks.
+  </p>
+
+  <div class="docs">
+    <a class="doc" href="user-guide.html">
+      <h2>User Guide</h2>
+      <p>
+        How to use the platform: what each role can do, the order things happen in, and which rule
+        is responsible when a screen looks emptier than expected.
+      </p>
+      <span class="who">For donors, hospitals, blood banks and administrators</span>
+    </a>
+
+    <a class="doc" href="tdd.html">
+      <h2>Technical Design</h2>
+      <p>
+        The architecture, the technology choices and why each was made, the request state machine,
+        caching and queue design, failure behaviour, and every epic broken into stories.
+      </p>
+      <span class="who">For engineers and reviewers</span>
+    </a>
+
+    <a class="doc" href="PROJECT_SPEC.md">
+      <h2>Original Specification</h2>
+      <p>
+        The specification the project was built to, kept as written so the design document's
+        deviations from it can be checked.
+      </p>
+      <span class="who">Reference</span>
+    </a>
+  </div>
+
+  <div class="repo">
+    <p style="margin:0">
+      Source on <a href="https://github.com/Suchetan1265/lifelink">GitHub</a>.
+    </p>
+    <p class="stack" style="margin:0.6rem 0 0">
+      Spring Boot 3.5 &middot; Java 17 &middot; PostgreSQL &middot; Redis &middot; RabbitMQ &middot;
+      Quartz &middot; Flyway &middot; JWT<br>
+      React 18 &middot; Vite &middot; TanStack Query &middot; Leaflet &middot; Recharts
+    </p>
+  </div>
+
+</div>
