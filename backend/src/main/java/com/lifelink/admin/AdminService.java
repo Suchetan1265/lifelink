@@ -16,12 +16,14 @@ import com.lifelink.hospital.Hospital;
 import com.lifelink.hospital.HospitalRepository;
 import com.lifelink.notification.NotificationService;
 import com.lifelink.notification.NotificationType;
+import com.lifelink.redis.RedisConfig;
 import com.lifelink.request.RequestRepository;
 import com.lifelink.request.RequestStatus;
 import com.lifelink.user.User;
 import com.lifelink.user.UserRepository;
 import com.lifelink.user.UserStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -139,6 +141,8 @@ public class AdminService {
         return UserSummaryResponse.from(user);
     }
 
+    /** Cached as {@code stats:admin} for five minutes (spec §7). */
+    @Cacheable(cacheNames = RedisConfig.STATS_CACHE, key = "'admin'")
     @Transactional(readOnly = true)
     public PlatformStatsResponse stats() {
         Map<String, Long> requestsByStatus = new LinkedHashMap<>();

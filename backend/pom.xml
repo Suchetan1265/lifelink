@@ -20,6 +20,7 @@
 		<spring-statemachine.version>4.0.2</spring-statemachine.version>
 		<embedded-postgres.version>2.0.7</embedded-postgres.version>
 		<embedded-postgres-binaries.version>16.2.0</embedded-postgres-binaries.version>
+		<embedded-redis.version>1.4.3</embedded-redis.version>
 	</properties>
 
 	<dependencyManagement>
@@ -146,6 +147,12 @@
 		<dependency>
 			<groupId>io.zonky.test.postgres</groupId>
 			<artifactId>embedded-postgres-binaries-windows-amd64</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.codemonstur</groupId>
+			<artifactId>embedded-redis</artifactId>
+			<version>${embedded-redis.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

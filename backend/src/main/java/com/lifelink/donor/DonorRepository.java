@@ -47,6 +47,34 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
             @Param("groups") Collection<String> groups,
             @Param("limit") int limit);
 
+    /** Everyone who belongs in the Redis GEO sets right now (startup rebuild). */
+    @Query("SELECT d FROM Donor d WHERE d.available = true "
+            + "AND (d.nextEligibleDate IS NULL OR d.nextEligibleDate <= :today)")
+    List<Donor> findMatchable(@Param("today") LocalDate today);
+
+    /**
+     * Narrows Redis GEO hits to donors who are still matchable in the source
+     * of truth and free of an active match, which Redis cannot know.
+     *
+     * @return [user_id, radius_km] rows
+     */
+    @Query(value = """
+            SELECT d.user_id, d.radius_km
+            FROM donors d
+            WHERE d.user_id IN (:ids)
+              AND d.available = true
+              AND (d.next_eligible_date IS NULL OR d.next_eligible_date <= CURRENT_DATE)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM request_matches rm
+                  JOIN requests r ON r.id = rm.request_id
+                  WHERE rm.donor_id = d.user_id
+                    AND rm.status IN ('NOTIFIED', 'ACCEPTED', 'CONFIRMED')
+                    AND r.status IN ('RAISED', 'MATCHED', 'CONFIRMED', 'ESCALATED')
+              )
+            """, nativeQuery = true)
+    List<Object[]> findMatchableAmong(@Param("ids") Collection<Long> ids);
+
     /** Donors whose 90-day cooldown ends on the given day (eligibility job). */
     List<Donor> findByNextEligibleDate(LocalDate date);
 

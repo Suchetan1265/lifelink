@@ -12,10 +12,13 @@ import com.lifelink.common.PageResponse;
 import com.lifelink.donation.Donation;
 import com.lifelink.donation.DonationRepository;
 import com.lifelink.donor.Donor;
+import com.lifelink.donor.DonorService;
 import com.lifelink.hospital.Hospital;
 import com.lifelink.hospital.HospitalRepository;
 import com.lifelink.notification.NotificationService;
 import com.lifelink.notification.NotificationType;
+import com.lifelink.redis.DonorGeoService;
+import com.lifelink.redis.RequestRateLimiter;
 import com.lifelink.request.dto.CreateRequestRequest;
 import com.lifelink.request.dto.FulfillRequest;
 import com.lifelink.request.dto.RequestMatchResponse;
@@ -26,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +52,8 @@ public class RequestService {
     private final RequestLifecycleService lifecycle;
     private final MatchingService matchingService;
     private final NotificationService notificationService;
+    private final RequestRateLimiter rateLimiter;
+    private final DonorGeoService donorGeoService;
 
     @Transactional
     public RequestResponse create(Long userId, CreateRequestRequest dto) {
@@ -56,6 +62,7 @@ public class RequestService {
         if (!hospital.isVerified()) {
             throw new ForbiddenException("Hospital is pending admin verification");
         }
+        rateLimiter.recordRequest(hospital.getId());
 
         Request request = new Request();
         request.setHospital(hospital);
@@ -127,6 +134,8 @@ public class RequestService {
         return RequestResponse.from(request);
     }
 
+    @CacheEvict(cacheNames = DonorService.DONOR_CACHE, key = "#dto.donorId() + ':profile'",
+            condition = "#dto.donorId() != null")
     @Transactional
     public RequestResponse fulfill(Long userId, Long requestId, FulfillRequest dto) {
         Request request = loadOwnedRequest(userId, requestId);
@@ -150,6 +159,8 @@ public class RequestService {
             LocalDate today = LocalDate.now();
             donor.setLastDonationDate(today);
             donor.setNextEligibleDate(today.plusDays(ELIGIBILITY_COOLDOWN_DAYS));
+            // Off the matching index until the cooldown ends.
+            donorGeoService.index(donor);
 
             notificationService.notify(donor.getUserId(), NotificationType.DONATION_RECORDED,
                     "Donation recorded — thank you!",
