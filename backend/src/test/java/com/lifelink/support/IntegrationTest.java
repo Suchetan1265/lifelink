@@ -6,7 +6,6 @@ import com.lifelink.auth.dto.RegisterBloodBankRequest;
 import com.lifelink.auth.dto.RegisterDonorRequest;
 import com.lifelink.auth.dto.RegisterHospitalRequest;
 import com.lifelink.common.BloodGroup;
-import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,8 +14,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -42,8 +39,6 @@ public abstract class IntegrationTest {
     protected static final String ADMIN_EMAIL = "admin@lifelink.test";
     protected static final String ADMIN_PASSWORD = "admin-test-password";
 
-    private static EmbeddedPostgres postgres;
-
     @Autowired
     protected MockMvc mockMvc;
 
@@ -52,21 +47,9 @@ public abstract class IntegrationTest {
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
-        int port = embeddedPostgres().getPort();
-        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:" + port + "/postgres");
-        registry.add("spring.datasource.username", () -> "postgres");
-        registry.add("spring.datasource.password", () -> "postgres");
-    }
-
-    private static synchronized EmbeddedPostgres embeddedPostgres() {
-        if (postgres == null) {
-            try {
-                postgres = EmbeddedPostgres.builder().start();
-            } catch (IOException e) {
-                throw new UncheckedIOException("Could not start the embedded PostgreSQL server", e);
-            }
-        }
-        return postgres;
+        registry.add("spring.datasource.url", () -> EmbeddedPostgresServer.jdbcUrl("postgres"));
+        registry.add("spring.datasource.username", () -> EmbeddedPostgresServer.USERNAME);
+        registry.add("spring.datasource.password", () -> EmbeddedPostgresServer.PASSWORD);
     }
 
     protected static String uniqueEmail(String prefix) {
