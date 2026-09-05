@@ -1,0 +1,17 @@
+# Local development only. These values are throwaway and exist so a fresh clone
+# runs with one command; they are deliberately NOT defaults in application.yml,
+# so a real deployment that forgets to set the environment fails to start
+# instead of quietly running on a signing key published in this repository.
+#
+# Enable with: ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+spring:
+  datasource:
+    password: changeme
+
+app:
+  jwt:
+    secret: local-dev-only-not-a-real-secret-0123456789abcdef0123456789abcdef
+  admin:
+    email: admin@lifelink.local
+    password: admin-local-dev-only

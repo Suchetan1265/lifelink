@@ -5,8 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lifelink}
     username: ${DB_USER:lifelink_app}
-    # Dev-only default — set DB_PASSWORD in the environment for anything real.
-    password: ${DB_PASSWORD:changeme}
+    password: ${DB_PASSWORD:}
 
   jpa:
     # Flyway owns the schema; Hibernate only validates that entities match it.
@@ -58,15 +57,17 @@ app:
     # Address the email worker sends from.
     from: ${MAIL_FROM:no-reply@lifelink.local}
   jwt:
-    # Dev-only default (HS256 needs >= 32 bytes). Set JWT_SECRET in the environment for anything real.
-    secret: ${JWT_SECRET:lifelink-dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
+    # No default on purpose: a shared signing key would let anyone mint tokens
+    # for any deployment that forgot to override it. Startup fails without it.
+    # HS256 needs at least 32 bytes. The dev profile supplies a throwaway one.
+    secret: ${JWT_SECRET}
     access-ttl-minutes: 15
     refresh-ttl-days: 7
   admin:
     # Bootstraps the first ADMIN account when none exists (see AdminBootstrap).
-    # Dev-only defaults -- set ADMIN_EMAIL / ADMIN_PASSWORD for anything real.
+    # Blank password means no admin is created, which AdminBootstrap warns about.
     email: ${ADMIN_EMAIL:admin@lifelink.local}
-    password: ${ADMIN_PASSWORD:admin-dev-only-change-me}
+    password: ${ADMIN_PASSWORD:}
 
 server:
   port: 8080

@@ -104,17 +104,23 @@ docker compose up -d
 
 ```bash
 cd backend
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-It listens on **8080**. On first start `AdminBootstrap` creates the admin account
-from `app.admin.*`, because without an admin nobody can verify a hospital and no
-request could ever be raised.
+It listens on **8080**. The `dev` profile supplies throwaway local values for the
+JWT signing key, database password and admin password. Those are **not** defaults
+in `application.yml` on purpose: a signing key published in this repository would
+let anyone mint tokens for a deployment that forgot to override it, so the app
+refuses to start unless `JWT_SECRET` is set some other way.
 
-To load demo data (one hospital, one blood bank, twelve donors around Bengaluru):
+On first start `AdminBootstrap` creates the admin account from `app.admin.*`,
+because without an admin nobody can verify a hospital and no request could ever be
+raised. A blank admin password skips that, with a warning.
+
+To also load demo data (one hospital, one blood bank, twelve donors around Bengaluru):
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=seed
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev,seed
 ```
 
 Seeded accounts are `hospital@lifelink.local`, `bloodbank@lifelink.local` and
@@ -127,9 +133,9 @@ development-only.
 
 | Variable | Purpose |
 |---|---|
+| `JWT_SECRET` | **Required.** HS256 signing key, 32+ bytes. No default — startup fails without it |
 | `DB_PASSWORD` | Postgres app-user password |
-| `JWT_SECRET` | HS256 signing key, 32+ bytes |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Bootstrapped admin account |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Bootstrapped admin account; blank password skips the bootstrap |
 | `MAIL_USER` / `MAIL_PASSWORD` | Mailtrap credentials; blank keeps email in log-only mode |
 | `REDIS_HOST`, `RABBITMQ_HOST` | Default to localhost |
 

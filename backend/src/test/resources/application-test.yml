@@ -1,5 +1,8 @@
 # Tests point at an embedded PostgreSQL wired up in IntegrationTest.
 app:
+  jwt:
+    # application.yml has no default, so tests supply their own throwaway key.
+    secret: test-only-signing-key-0123456789abcdef0123456789abcdef
   admin:
     email: admin@lifelink.test
     password: admin-test-password
