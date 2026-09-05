@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lifelink-postgres
+    environment:
+      POSTGRES_DB: lifelink
+      POSTGRES_USER: lifelink_app
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifelink_app -d lifelink"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: lifelink-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: lifelink-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # web console (guest/guest)
+
+volumes:
+  postgres_data:

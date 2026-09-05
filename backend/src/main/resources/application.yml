@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: lifelink-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lifelink}
+    username: ${DB_USER:lifelink_app}
+    # Dev-only default — set DB_PASSWORD in the environment for anything real.
+    password: ${DB_PASSWORD:changeme}
+
+  jpa:
+    # Flyway owns the schema; Hibernate only validates that entities match it.
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+  quartz:
+    job-store-type: memory
+
+  mvc:
+    problemdetails:
+      enabled: true
+
+app:
+  jwt:
+    # Dev-only default (HS256 needs >= 32 bytes). Set JWT_SECRET in the environment for anything real.
+    secret: ${JWT_SECRET:lifelink-dev-only-secret-change-me-0123456789abcdef0123456789abcdef}
+    access-ttl-minutes: 15
+    refresh-ttl-days: 7
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    org.hibernate.SQL: debug

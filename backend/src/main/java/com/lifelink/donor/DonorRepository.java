@@ -1,0 +1,48 @@
+package com.lifelink.donor;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.Collection;
+import java.util.List;
+
+public interface DonorRepository extends JpaRepository<Donor, Long> {
+
+    /**
+     * Matching engine v1 (spec §2.E.1), plain-SQL Haversine — the Redis GEO
+     * variant replaces this in week 3. Returns [user_id, distance_km] rows for
+     * donors who are available, eligible, within their own travel radius of the
+     * hospital, and not already tied to an active request; nearest first.
+     */
+    @Query(value = """
+            SELECT t.user_id, t.distance_km
+            FROM (
+                SELECT d.user_id,
+                       d.radius_km,
+                       6371.0 * acos(least(1.0,
+                           cos(radians(:lat)) * cos(radians(d.lat)) * cos(radians(d.lng) - radians(:lng))
+                           + sin(radians(:lat)) * sin(radians(d.lat)))) AS distance_km
+                FROM donors d
+                WHERE d.available = true
+                  AND d.blood_group IN (:groups)
+                  AND (d.next_eligible_date IS NULL OR d.next_eligible_date <= CURRENT_DATE)
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM request_matches rm
+                      JOIN requests r ON r.id = rm.request_id
+                      WHERE rm.donor_id = d.user_id
+                        AND rm.status IN ('NOTIFIED', 'ACCEPTED', 'CONFIRMED')
+                        AND r.status IN ('RAISED', 'MATCHED', 'CONFIRMED', 'ESCALATED')
+                  )
+            ) t
+            WHERE t.distance_km <= t.radius_km
+            ORDER BY t.distance_km
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Object[]> findMatchCandidates(
+            @Param("lat") double lat,
+            @Param("lng") double lng,
+            @Param("groups") Collection<String> groups,
+            @Param("limit") int limit);
+}
