@@ -21,5 +21,8 @@ COPY --from=build /build/backend/target/*.jar app.jar
 
 EXPOSE 8080
 
-# MaxRAMPercentage keeps the heap inside a small container's memory limit.
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]
+# Tuned for a 512 MB container. A 75% heap leaves too little for metaspace,
+# code cache and thread stacks, so the container gets OOM-killed without the
+# JVM reporting anything useful. SerialGC costs less overhead than G1 at this
+# size, and smaller stacks matter with Tomcat, Quartz and AMQP listener threads.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=55", "-XX:+UseSerialGC", "-Xss512k", "-XX:MaxMetaspaceSize=128m", "-jar", "/app/app.jar"]
