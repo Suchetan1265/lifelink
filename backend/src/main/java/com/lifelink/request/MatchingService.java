@@ -1,6 +1,8 @@
 package com.lifelink.request;
 
 import com.lifelink.common.BloodGroup;
+import com.lifelink.common.GeoDistance;
+import com.lifelink.donor.Donor;
 import com.lifelink.donor.DonorRepository;
 import com.lifelink.hospital.Hospital;
 import com.lifelink.notification.NotificationService;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +43,7 @@ public class MatchingService {
      */
     static final double MAX_SEARCH_RADIUS_KM = 500;
 
+    private final RequestRepository requestRepository;
     private final DonorRepository donorRepository;
     private final RequestMatchRepository requestMatchRepository;
     private final NotificationService notificationService;
@@ -71,6 +75,59 @@ public class MatchingService {
                                     request.getUrgency(), candidate.distanceKm()));
         }
         return candidates.size();
+    }
+
+    /**
+     * Attaches a donor who has just become matchable to the best open request
+     * they can serve (spec §2.A.4).
+     *
+     * <p>Matching otherwise only runs when a request is raised, which leaves a
+     * donor who turns availability on a minute later hearing nothing about a
+     * request that is still open and needs exactly their blood group. Only one
+     * request is taken, matching the rule that a donor is never tied to two
+     * active requests at once.
+     *
+     * @return the request they were matched to, if any
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<Request> matchToOpenRequest(Donor donor) {
+        if (requestMatchRepository.existsActiveMatchForDonor(donor.getUserId())) {
+            return Optional.empty();
+        }
+        Set<BloodGroup> servable = donor.getBloodGroup().canDonateTo();
+
+        Optional<Request> best = requestRepository
+                .findByStatusInWithHospital(List.of(RequestStatus.RAISED, RequestStatus.MATCHED)).stream()
+                .filter(request -> servable.contains(request.getBloodGroup()))
+                .filter(request -> distanceTo(donor, request) <= donor.getRadiusKm())
+                .min(Comparator
+                        .<Request>comparingInt(request -> request.getUrgency().ordinal())
+                        .thenComparingDouble(request -> distanceTo(donor, request)));
+
+        best.ifPresent(request -> {
+            double distanceKm = round(distanceTo(donor, request));
+            RequestMatch match = new RequestMatch();
+            match.setRequest(request);
+            match.setDonor(donor);
+            match.setStatus(MatchStatus.NOTIFIED);
+            match.setDistanceKm(distanceKm);
+            requestMatchRepository.save(match);
+
+            Hospital hospital = request.getHospital();
+            notificationService.notify(donor.getUserId(), NotificationType.MATCH_FOUND,
+                    hospital.getName() + " needs " + request.getBloodGroup().label() + " blood",
+                    "%d unit(s) needed by %s, urgency %s, about %.1f km from you. Open your matches to respond."
+                            .formatted(request.getUnits(), request.getNeededBy(),
+                                    request.getUrgency(), distanceKm));
+            log.info("Matched newly available donor {} to open request {}", donor.getUserId(), request.getId());
+        });
+        return best;
+    }
+
+    private static double distanceTo(Donor donor, Request request) {
+        Hospital hospital = request.getHospital();
+        return GeoDistance.haversineKm(
+                donor.getLat(), donor.getLng(), hospital.getLat(), hospital.getLng());
     }
 
     /**

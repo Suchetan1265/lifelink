@@ -2,6 +2,7 @@ package com.lifelink.donor;
 
 import com.lifelink.notification.NotificationService;
 import com.lifelink.redis.DonorGeoService;
+import com.lifelink.request.MatchingService;
 import com.lifelink.notification.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class DonorEligibilityService {
     private final DonorRepository donorRepository;
     private final NotificationService notificationService;
     private final DonorGeoService donorGeoService;
+    private final MatchingService matchingService;
 
     /** @return how many donors became eligible today */
     @Transactional
@@ -34,6 +36,9 @@ public class DonorEligibilityService {
         for (Donor donor : donors) {
             // Back in the GEO sets, but only if they still have availability on.
             donorGeoService.index(donor);
+            if (donor.isAvailable()) {
+                matchingService.matchToOpenRequest(donor);
+            }
             notificationService.notify(donor.getUserId(), NotificationType.ELIGIBLE_AGAIN,
                     "You can donate again",
                     "Your 90-day wait is over. Turn availability on to start receiving nearby requests.");

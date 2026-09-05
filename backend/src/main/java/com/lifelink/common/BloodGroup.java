@@ -35,6 +35,17 @@ public enum BloodGroup {
         throw new IllegalArgumentException("Unknown blood group: " + value);
     }
 
+    /** Recipient groups this donor's blood can be given to; the inverse of {@link #compatibleDonors()}. */
+    public Set<BloodGroup> canDonateTo() {
+        Set<BloodGroup> recipients = EnumSet.noneOf(BloodGroup.class);
+        for (BloodGroup recipient : values()) {
+            if (recipient.compatibleDonors().contains(this)) {
+                recipients.add(recipient);
+            }
+        }
+        return recipients;
+    }
+
     /** Donor groups whose blood a recipient of this group can receive. */
     public Set<BloodGroup> compatibleDonors() {
         return switch (this) {

@@ -8,6 +8,7 @@ import com.lifelink.donor.dto.DonorProfileResponse;
 import com.lifelink.donor.dto.EligibilityResponse;
 import com.lifelink.donor.dto.UpdateDonorProfileRequest;
 import com.lifelink.redis.DonorGeoService;
+import com.lifelink.request.MatchingService;
 import com.lifelink.request.RequestMatchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
@@ -30,6 +31,7 @@ public class DonorService {
     private final RequestMatchRepository requestMatchRepository;
     private final DonationRepository donationRepository;
     private final DonorGeoService donorGeoService;
+    private final MatchingService matchingService;
 
     /** Cached as {@code donor:{id}:profile} for an hour (spec §7). */
     @Cacheable(cacheNames = DONOR_CACHE, key = "#userId + ':profile'")
@@ -60,6 +62,10 @@ public class DonorService {
         Donor donor = findDonor(userId);
         donor.setAvailable(available);
         donorGeoService.index(donor);
+        if (available) {
+            // Requests raised before they switched on would otherwise never reach them.
+            matchingService.matchToOpenRequest(donor);
+        }
         return DonorProfileResponse.from(donor);
     }
 

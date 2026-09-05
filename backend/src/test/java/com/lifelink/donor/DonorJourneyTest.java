@@ -6,6 +6,7 @@ import com.lifelink.request.Urgency;
 import com.lifelink.request.dto.CreateRequestRequest;
 import com.lifelink.request.dto.FulfillRequest;
 import com.lifelink.support.RedisIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,6 +14,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -31,15 +33,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 class DonorJourneyTest extends RedisIntegrationTest {
 
-    private static final double LAT = 12.9716;
+    /**
+     * Each test gets its own patch of the globe. Donors are matched to open
+     * requests the moment they become available, so without this a donor here
+     * could be claimed by another test's request and never see its own.
+     */
+    private static final AtomicInteger LATITUDE_SEQUENCE = new AtomicInteger();
     private static final double LNG = 77.5946;
+
+    private double lat;
+
+    @BeforeEach
+    void pickAnIsolatedLocation() {
+        lat = 30.0 + LATITUDE_SEQUENCE.getAndIncrement() * 8.0;
+    }
 
     @Autowired
     private StringRedisTemplate redis;
 
     @Test
     void donorIsMatchedConfirmedAndThenLockedOutForNinetyDays() throws Exception {
-        String donorToken = registerDonor(uniqueEmail("donor"), "Ada Donor", BloodGroup.O_NEG, LAT, LNG, 25);
+        String donorToken = registerDonor(uniqueEmail("donor"), "Ada Donor", BloodGroup.O_NEG, lat, LNG, 25);
         long donorId = userId(donorToken);
         setAvailability(donorToken, true);
 
@@ -100,7 +114,7 @@ class DonorJourneyTest extends RedisIntegrationTest {
 
     @Test
     void decliningLeavesTheRequestOpenForOtherDonors() throws Exception {
-        String donorToken = registerDonor(uniqueEmail("donor"), "Busy Donor", BloodGroup.A_NEG, LAT, LNG, 25);
+        String donorToken = registerDonor(uniqueEmail("donor"), "Busy Donor", BloodGroup.A_NEG, lat, LNG, 25);
         setAvailability(donorToken, true);
 
         String hospitalToken = verifiedHospital();
@@ -120,7 +134,7 @@ class DonorJourneyTest extends RedisIntegrationTest {
 
     @Test
     void respondingTwiceToTheSameMatchConflicts() throws Exception {
-        String donorToken = registerDonor(uniqueEmail("donor"), "Twice Donor", BloodGroup.B_NEG, LAT, LNG, 25);
+        String donorToken = registerDonor(uniqueEmail("donor"), "Twice Donor", BloodGroup.B_NEG, lat, LNG, 25);
         setAvailability(donorToken, true);
 
         String hospitalToken = verifiedHospital();
@@ -137,7 +151,7 @@ class DonorJourneyTest extends RedisIntegrationTest {
 
     @Test
     void hospitalCannotConfirmADonorWhoNeverAccepted() throws Exception {
-        String donorToken = registerDonor(uniqueEmail("donor"), "Silent Donor", BloodGroup.AB_NEG, LAT, LNG, 25);
+        String donorToken = registerDonor(uniqueEmail("donor"), "Silent Donor", BloodGroup.AB_NEG, lat, LNG, 25);
         setAvailability(donorToken, true);
 
         String hospitalToken = verifiedHospital();
@@ -151,9 +165,9 @@ class DonorJourneyTest extends RedisIntegrationTest {
 
     @Test
     void anotherDonorCannotRespondToSomeoneElsesMatch() throws Exception {
-        String donorToken = registerDonor(uniqueEmail("donor"), "Owner Donor", BloodGroup.AB_POS, LAT, LNG, 25);
+        String donorToken = registerDonor(uniqueEmail("donor"), "Owner Donor", BloodGroup.AB_POS, lat, LNG, 25);
         setAvailability(donorToken, true);
-        String otherToken = registerDonor(uniqueEmail("donor"), "Other Donor", BloodGroup.O_POS, LAT, LNG, 25);
+        String otherToken = registerDonor(uniqueEmail("donor"), "Other Donor", BloodGroup.O_POS, lat, LNG, 25);
 
         String hospitalToken = verifiedHospital();
         long requestId = raiseRequest(hospitalToken, BloodGroup.AB_POS);
@@ -167,7 +181,7 @@ class DonorJourneyTest extends RedisIntegrationTest {
     @Test
     void unavailableDonorsAreNotMatched() throws Exception {
         // Registered but never toggled available.
-        String donorToken = registerDonor(uniqueEmail("donor"), "Offline Donor", BloodGroup.O_POS, LAT, LNG, 25);
+        String donorToken = registerDonor(uniqueEmail("donor"), "Offline Donor", BloodGroup.O_POS, lat, LNG, 25);
 
         String hospitalToken = verifiedHospital();
         long requestId = raiseRequest(hospitalToken, BloodGroup.O_POS);
@@ -198,7 +212,7 @@ class DonorJourneyTest extends RedisIntegrationTest {
     }
 
     private String verifiedHospital() throws Exception {
-        String token = registerHospital(uniqueEmail("hospital"), "City General Hospital", LAT, LNG);
+        String token = registerHospital(uniqueEmail("hospital"), "City General Hospital", lat, LNG);
         verifyAccount(token);
         return token;
     }
