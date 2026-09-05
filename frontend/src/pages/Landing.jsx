@@ -11,23 +11,21 @@ export default function Landing() {
   return (
     <AuthLayout>
       <h2>Get started</h2>
-      <p className="sub">
-        Whether you give blood, need it, or hold it, LifeLink connects the three in one place.
-      </p>
+      <p className="sub">Give blood, ask for it, or hold it. One place for all three.</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-        <Link className="button block" to="/register">
+        <Link className="button pill block" to="/register">
           Create an account
         </Link>
-        <Link className="button ghost block" to="/login">
+        <Link className="button ghost pill block" to="/login">
           I already have one
         </Link>
       </div>
 
       <p className="demo-hint">
-        <strong>Just looking?</strong> Sign in as <code>donor1@lifelink.local</code> with the
-        password <code>password123</code> to see the donor side, or{' '}
-        <code>hospital@lifelink.local</code> to raise a request.
+        <strong>Just looking?</strong> Sign in as <code>donor1@lifelink.local</code> to see the
+        donor side, or <code>hospital@lifelink.local</code> to raise a request. Password is{' '}
+        <code>password123</code>.
       </p>
     </AuthLayout>
   );

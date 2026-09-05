@@ -99,7 +99,7 @@ export default function Register() {
   const isDonor = tab === 'donor';
 
   return (
-    <AuthLayout>
+    <AuthLayout motto={false}>
       <h2>Create an account</h2>
       <p className="sub">Tell us who you are and where you are.</p>
 
@@ -215,7 +215,7 @@ export default function Register() {
 
         {error && <p className="error">{error}</p>}
 
-        <button type="submit" className="button block" disabled={submitting}>
+        <button type="submit" className="button pill block" disabled={submitting}>
           {submitting ? 'Creating…' : 'Create account'}
         </button>
       </form>
