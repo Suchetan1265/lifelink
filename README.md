@@ -133,6 +133,20 @@ development-only.
 | `MAIL_USER` / `MAIL_PASSWORD` | Mailtrap credentials; blank keeps email in log-only mode |
 | `REDIS_HOST`, `RABBITMQ_HOST` | Default to localhost |
 
+### Start the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+It serves on **5173** and proxies `/api` to the backend, so the browser stays
+same-origin and there is no CORS preflight in development.
+
+Sign in as any seeded account to land on that role's dashboard. Routes are guarded
+by role on the client and enforced again on the server.
+
 ---
 
 ## Tests
@@ -180,6 +194,12 @@ as `userId` — it identifies a hospital or a blood bank uniformly.
 ## Layout
 
 ```
+frontend/src/
+  api/          axios instance, refresh-on-401 interceptor, endpoint calls
+  auth/         session context and the role route guard
+  components/   layout, notification bell, status chips, donor map
+  pages/        one folder per role, plus the public landing and auth screens
+
 backend/src/main/java/com/lifelink/
   admin/        verification queue, platform stats, account status
   auth/         registration, login, refresh-token rotation
@@ -201,8 +221,9 @@ backend/src/main/java/com/lifelink/
 
 ## Known gaps
 
-- **Frontend is not built yet.** The React app in `frontend/` is the remaining work
-  from spec §9.
+- **The frontend has never been run.** It was written on a machine without Node
+  installed, so `npm install && npm run dev` is the first real exercise it gets.
+  The backend is covered by tests; the React app is not.
 - **Spring State Machine** is a dependency but unused; `RequestLifecycleService`
   hand-rolls the transition table in `RequestEvent`, which satisfies §3 (validated
   transitions plus an audit row) with far less machinery. Either wire it up or drop
