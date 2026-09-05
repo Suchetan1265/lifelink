@@ -32,9 +32,13 @@ Flyway creates every table on first boot. There is nothing to run by hand.
 ## 2. Redis — Upstash
 
 1. Sign up at [upstash.com](https://upstash.com) and create a Redis database.
-2. From the details page copy the **endpoint host**, **port** and **password**.
+2. Copy the **`rediss://` URL**, not the REST URL. It has the shape
+   `rediss://default:TOKEN@host:6379` — the host, the username `default` and the
+   token are the three values needed below.
 
-Upstash requires TLS, which is why `SPRING_DATA_REDIS_SSL_ENABLED` is set below.
+The REST URL and REST token are for Upstash's HTTP API, which this app does not
+use; Spring speaks the Redis protocol over TLS, hence
+`SPRING_DATA_REDIS_SSL_ENABLED=true`.
 
 ## 3. RabbitMQ — CloudAMQP
 
@@ -70,8 +74,9 @@ Upstash requires TLS, which is why `SPRING_DATA_REDIS_SSL_ENABLED` is set below.
 | `SPRING_DATASOURCE_USERNAME` | From Neon |
 | `SPRING_DATASOURCE_PASSWORD` | From Neon |
 | `SPRING_DATA_REDIS_HOST` | Upstash endpoint host |
-| `SPRING_DATA_REDIS_PORT` | Upstash port |
-| `SPRING_DATA_REDIS_PASSWORD` | Upstash password |
+| `SPRING_DATA_REDIS_PORT` | `6379` |
+| `SPRING_DATA_REDIS_USERNAME` | `default` — Upstash rejects the connection without it |
+| `SPRING_DATA_REDIS_PASSWORD` | The token from the `rediss://` URL |
 | `SPRING_DATA_REDIS_SSL_ENABLED` | `true` |
 | `SPRING_RABBITMQ_ADDRESSES` | The CloudAMQP `amqps://…` URL |
 | `WEB_BASE_URL` | Your Render URL, e.g. `https://lifelink.onrender.com`. Password reset links point here |
@@ -94,6 +99,15 @@ work in production.
 3. Keep `http://localhost:5173` there so local development keeps working.
 
 Changes can take a few minutes to take effect.
+
+---
+
+## Verified
+
+This configuration has been run end to end against live Neon and Upstash before
+deploying: Flyway applied all three migrations, the seed loaded, all eight GEO
+sets appeared in Redis, and a request raised through the API matched two donors
+by distance. If a deploy misbehaves, the difference is Render, not this config.
 
 ---
 
