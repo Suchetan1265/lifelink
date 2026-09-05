@@ -124,6 +124,26 @@ next request has to boot Spring again — expect **30–60 seconds** on the firs
 click. If you are sharing the link somewhere it matters, either mention it or
 move to a paid instance, which removes the sleep.
 
+### Staying inside the free tiers
+
+None of the four providers can bill you without a payment method on file. They
+stop serving instead, which is the failure mode you want for a portfolio link.
+
+`scripts/check-quotas.ps1` reports current usage against each limit.
+
+| Limit | Allowance | What runs out first |
+|---|---|---|
+| Render build minutes | 500/month | **The binding one.** Each deploy compiles Maven and npm in Docker |
+| Render instance hours | 750/month | Only reachable if the service stops sleeping |
+| Neon compute | ~192 hours/month | Accrues only while a connection is open |
+| Upstash commands | 10,000/day | A cold start costs about 20 |
+| CloudAMQP queue depth | 100 messages | Binds before the 1M/month message count |
+
+**The trap.** Making the Render service always-on removes the cold start, but
+then Quartz polls the database every 15 minutes forever, so Neon never scales to
+zero and burns roughly 744 compute hours against a ~192 hour allowance. Upgrading
+Render means budgeting for Neon too.
+
 ### Redeploying
 
 Render rebuilds on every push to `main`. Nothing else to do.
