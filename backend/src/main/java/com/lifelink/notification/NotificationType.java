@@ -6,6 +6,7 @@ public enum NotificationType {
     MATCH_COVERED,      // donor: thanks, another donor was confirmed
     DONOR_RESPONDED,    // hospital: a donor accepted/declined
     REQUEST_ESCALATED,  // blood bank: nearby request needs stock
+    BANK_ACCEPTED,      // hospital: a blood bank is covering the escalated request
     REQUEST_EXPIRED,    // hospital: request passed needed-by unfulfilled
     REQUEST_CANCELLED,  // donor: the request you responded to was cancelled
     DONATION_RECORDED,  // donor: donation saved, eligibility updated

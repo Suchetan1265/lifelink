@@ -4,6 +4,11 @@ app:
     email: admin@lifelink.test
     password: admin-test-password
 
+spring:
+  quartz:
+    # Tests drive the maintenance services directly, so no timers fire.
+    auto-startup: false
+
 logging:
   level:
     org.hibernate.SQL: warn

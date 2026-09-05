@@ -8,6 +8,7 @@ import com.lifelink.auth.RefreshTokenRepository;
 import com.lifelink.bloodbank.BloodBank;
 import com.lifelink.bloodbank.BloodBankRepository;
 import com.lifelink.common.BadRequestException;
+import com.lifelink.common.BloodGroup;
 import com.lifelink.common.ConflictException;
 import com.lifelink.common.NotFoundException;
 import com.lifelink.donor.DonorRepository;
@@ -160,12 +161,21 @@ public class AdminService {
                 requestRepository.avgHoursToFulfill(),
                 donorRepository.count(),
                 donorRepository.countByAvailableTrue(),
-                toCountMap(donorRepository.countGroupedByBloodGroup()),
+                bloodGroupCounts(),
                 toCountMap(donorRepository.countGroupedByCity()),
                 hospitalRepository.countByVerifiedTrue(),
                 bloodBankRepository.countByVerifiedTrue(),
                 hospitalRepository.countByUserStatus(UserStatus.PENDING)
                         + bloodBankRepository.countByUserStatus(UserStatus.PENDING));
+    }
+
+    /** Keyed by the label ('O-'), matching how BloodGroup appears everywhere else in the API. */
+    private Map<String, Long> bloodGroupCounts() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (Object[] row : donorRepository.countGroupedByBloodGroup()) {
+            counts.put(((BloodGroup) row[0]).label(), ((Number) row[1]).longValue());
+        }
+        return counts;
     }
 
     private static Map<String, Long> toCountMap(List<Object[]> rows) {

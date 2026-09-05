@@ -1,5 +1,6 @@
 package com.lifelink.request;
 
+import com.lifelink.bloodbank.BloodBank;
 import com.lifelink.common.BloodGroup;
 import com.lifelink.hospital.Hospital;
 import jakarta.persistence.Column;
@@ -63,6 +64,11 @@ public class Request {
 
     @Column(name = "closed_at")
     private Instant closedAt;
+
+    /** Set when a blood bank accepts the escalation; null for donor-sourced requests. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "accepted_bank_id")
+    private BloodBank acceptedBank;
 
     @PrePersist
     void onCreate() {

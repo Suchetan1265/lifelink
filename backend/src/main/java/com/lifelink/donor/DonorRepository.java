@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -45,6 +46,9 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
             @Param("lng") double lng,
             @Param("groups") Collection<String> groups,
             @Param("limit") int limit);
+
+    /** Donors whose 90-day cooldown ends on the given day (eligibility job). */
+    List<Donor> findByNextEligibleDate(LocalDate date);
 
     long countByAvailableTrue();
 

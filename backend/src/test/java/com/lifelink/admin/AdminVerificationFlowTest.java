@@ -1,7 +1,6 @@
 package com.lifelink.admin;
 
 import com.lifelink.auth.dto.LoginRequest;
-import com.lifelink.auth.dto.RegisterHospitalRequest;
 import com.lifelink.common.BloodGroup;
 import com.lifelink.request.Urgency;
 import com.lifelink.request.dto.CreateRequestRequest;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -19,28 +17,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Covers the gate that admin verification puts on the request flow: a hospital
+ * Covers the gate admin verification puts on the request flow: a hospital
  * registers PENDING, cannot raise requests, and only can once an admin approves.
  */
 class AdminVerificationFlowTest extends IntegrationTest {
 
     @Test
     void hospitalCanOnlyRaiseRequestsAfterAdminApproval() throws Exception {
-        String email = "hospital-" + UUID.randomUUID() + "@example.com";
-        String hospitalToken = registerHospital(email, "City General Hospital");
+        String email = uniqueEmail("hospital");
+        String hospitalToken = registerHospital(email, "City General Hospital", 12.9716, 77.5946);
 
-        // Pending hospitals are refused (spec 2.B.1).
+        // Pending hospitals are refused (spec §2.B.1).
         mockMvc.perform(post("/api/requests")
                         .header("Authorization", "Bearer " + hospitalToken)
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sampleRequest())))
+                        .content(json(sampleRequest())))
                 .andExpect(status().isForbidden());
 
         String adminToken = loginAdmin();
+        long hospitalUserId = userId(hospitalToken);
 
-        Long userId = pendingHospitalUserId(adminToken, email);
+        mockMvc.perform(get("/api/admin/verifications").param("type", "hospital")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.email == '" + email + "')]").isNotEmpty());
 
-        mockMvc.perform(post("/api/admin/verifications/{userId}/approve", userId)
+        mockMvc.perform(post("/api/admin/verifications/{userId}/approve", hospitalUserId)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.verified").value(true))
@@ -50,7 +52,7 @@ class AdminVerificationFlowTest extends IntegrationTest {
         mockMvc.perform(post("/api/requests")
                         .header("Authorization", "Bearer " + hospitalToken)
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(sampleRequest())))
+                        .content(json(sampleRequest())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("RAISED"));
 
@@ -63,29 +65,26 @@ class AdminVerificationFlowTest extends IntegrationTest {
 
     @Test
     void approvingTwiceConflicts() throws Exception {
-        String email = "hospital-" + UUID.randomUUID() + "@example.com";
-        registerHospital(email, "Riverside Clinic");
+        String hospitalToken = registerHospital(uniqueEmail("hospital"), "Riverside Clinic", 12.97, 77.59);
+        long hospitalUserId = userId(hospitalToken);
         String adminToken = loginAdmin();
-        Long userId = pendingHospitalUserId(adminToken, email);
 
-        mockMvc.perform(post("/api/admin/verifications/{userId}/approve", userId)
+        mockMvc.perform(post("/api/admin/verifications/{userId}/approve", hospitalUserId)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/api/admin/verifications/{userId}/approve", userId)
+        mockMvc.perform(post("/api/admin/verifications/{userId}/approve", hospitalUserId)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void rejectedHospitalCannotLogInAgain() throws Exception {
-        String email = "hospital-" + UUID.randomUUID() + "@example.com";
-        registerHospital(email, "Unlicensed Clinic");
-        String adminToken = loginAdmin();
-        Long userId = pendingHospitalUserId(adminToken, email);
+        String email = uniqueEmail("hospital");
+        String hospitalToken = registerHospital(email, "Unlicensed Clinic", 12.97, 77.59);
 
-        mockMvc.perform(post("/api/admin/verifications/{userId}/reject", userId)
-                        .header("Authorization", "Bearer " + adminToken)
+        mockMvc.perform(post("/api/admin/verifications/{userId}/reject", userId(hospitalToken))
+                        .header("Authorization", "Bearer " + loginAdmin())
                         .contentType(APPLICATION_JSON)
                         .content("{\"reason\":\"License number could not be verified\"}"))
                 .andExpect(status().isOk())
@@ -94,14 +93,13 @@ class AdminVerificationFlowTest extends IntegrationTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new LoginRequest(email, "hospital-password"))))
+                        .content(json(new LoginRequest(email, "hospital-password"))))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void nonAdminsCannotReachTheVerificationQueue() throws Exception {
-        String token = registerHospital("hospital-" + UUID.randomUUID() + "@example.com", "Snooping Hospital");
+        String token = registerHospital(uniqueEmail("hospital"), "Snooping Hospital", 12.97, 77.59);
 
         mockMvc.perform(get("/api/admin/verifications").param("type", "hospital")
                         .header("Authorization", "Bearer " + token))
@@ -115,39 +113,16 @@ class AdminVerificationFlowTest extends IntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    private String registerHospital(String email, String name) throws Exception {
-        var body = new RegisterHospitalRequest(
-                email, "+91-99999-00000", "hospital-password", name,
-                "LIC-" + UUID.randomUUID(), "12 Main Road, Bengaluru", 12.9716, 77.5946);
-        String json = mockMvc.perform(post("/api/auth/register/hospital")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(json).get("accessToken").asText();
-    }
+    @Test
+    void statsCountRequestsAndDonors() throws Exception {
+        registerDonor(uniqueEmail("donor"), "Stats Donor", BloodGroup.O_NEG, 12.97, 77.59, 15);
 
-    private String loginAdmin() throws Exception {
-        String json = mockMvc.perform(post("/api/auth/login")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new LoginRequest("admin@lifelink.test", "admin-test-password"))))
+        mockMvc.perform(get("/api/admin/stats")
+                        .header("Authorization", "Bearer " + loginAdmin()))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(json).get("accessToken").asText();
-    }
-
-    private Long pendingHospitalUserId(String adminToken, String email) throws Exception {
-        String json = mockMvc.perform(get("/api/admin/verifications").param("type", "hospital")
-                        .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        for (var node : objectMapper.readTree(json)) {
-            if (email.equals(node.get("email").asText())) {
-                return node.get("userId").asLong();
-            }
-        }
-        throw new AssertionError(email + " is not in the pending verification queue: " + json);
+                .andExpect(jsonPath("$.requestsByStatus.RAISED").exists())
+                .andExpect(jsonPath("$.donorsByBloodGroup['O-']").exists())
+                .andExpect(jsonPath("$.fulfillmentRate").exists());
     }
 
     private static CreateRequestRequest sampleRequest() {

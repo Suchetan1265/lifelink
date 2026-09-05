@@ -16,6 +16,10 @@ public interface BloodBankRepository extends JpaRepository<BloodBank, Long> {
     @Query("SELECT b FROM BloodBank b JOIN FETCH b.user u WHERE u.status = :status ORDER BY b.id")
     List<BloodBank> findByUserStatus(@Param("status") UserStatus status);
 
+    /** Escalation fan-out; the owning user is fetched so notifications need no extra query. */
+    @Query("SELECT b FROM BloodBank b JOIN FETCH b.user WHERE b.verified = true")
+    List<BloodBank> findByVerifiedTrue();
+
     long countByVerifiedTrue();
 
     long countByUserStatus(UserStatus status);
