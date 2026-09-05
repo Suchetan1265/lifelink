@@ -170,6 +170,8 @@ development-only.
 | `DB_PASSWORD` | Postgres app-user password |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Bootstrapped admin account; blank password skips the bootstrap |
 | `MAIL_USER` / `MAIL_PASSWORD` | Mailtrap credentials; blank keeps email in log-only mode |
+| `GOOGLE_CLIENT_ID` | Enables Sign in with Google; blank hides the button. Public value, not a secret |
+| `WEB_BASE_URL` | Origin password-reset links point at; defaults to the Vite dev server |
 | `REDIS_HOST`, `RABBITMQ_HOST` | Default to localhost |
 
 ### Start the frontend

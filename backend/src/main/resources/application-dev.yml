@@ -10,6 +10,11 @@ spring:
     password: changeme
 
 app:
+  google:
+    # A Google client id is public by design -- it ships in the frontend bundle
+    # and is scoped to the authorised origins on the OAuth client, so keeping it
+    # here just saves setting an environment variable on every run.
+    client-id: 543852160685-vfuj1c05vc9jr3m05ebp356qcd7taclj.apps.googleusercontent.com
   jwt:
     secret: local-dev-only-not-a-real-secret-0123456789abcdef0123456789abcdef
   admin:
