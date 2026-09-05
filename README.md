@@ -1,0 +1,213 @@
+# LifeLink
+
+A blood donor–hospital matching platform. Hospitals raise requests for blood, the
+system finds nearby compatible donors and notifies them, and requests that nobody
+confirms in time escalate to blood banks.
+
+Built to [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md): Spring Boot 3 · PostgreSQL ·
+Redis · RabbitMQ · Quartz · JWT.
+
+---
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    subgraph Clients
+        D[Donor]
+        H[Hospital]
+        B[Blood bank]
+        A[Admin]
+    end
+
+    D & H & B & A --> API[Spring Boot API<br/>JWT, role guards]
+
+    API --> PG[(PostgreSQL<br/>source of truth)]
+    API --> RD[(Redis<br/>GEO index, caches, rate limit)]
+    API --> MQ[[RabbitMQ<br/>notifications topic]]
+
+    MQ --> EW[Email worker]
+    MQ --> SW[SMS worker]
+    MQ --> PW[Push worker]
+
+    Q[Quartz jobs] --> API
+    Q -.-> |every 15 min| ESC[escalate past deadline]
+    Q -.-> |every 15 min| EXP[expire past needed-by]
+    Q -.-> |daily 00:05| ELG[eligibility refresh]
+```
+
+**Postgres is the source of truth.** Redis is a derived index and cache, and every
+path that touches it falls back to SQL rather than failing: matching drops to a
+Haversine query, the dashboard drops to an uncached aggregate, and the rate limiter
+fails open so a hospital with an emergency is never locked out. The GEO sets are
+rebuilt from Postgres on startup so a cold or flushed Redis cannot silently shrink
+the pool of donors matching can reach.
+
+**Notifications are written synchronously and delivered asynchronously.** The row
+the notification bell reads is committed with the work that caused it; email, SMS
+and push are published to RabbitMQ *after* that transaction commits, so an operation
+that rolls back cannot send mail about something that never happened.
+
+### Request lifecycle
+
+```
+RAISED ──DONOR_ACCEPTED──> MATCHED ──HOSPITAL_CONFIRMED──> CONFIRMED ──DONATION_RECORDED──> FULFILLED
+  │           │                                                ▲
+  └───────────┴──ESCALATE_TIMEOUT──> ESCALATED ──BANK_ACCEPTED──┘
+  │           │                          │
+  └───────────┴──NEEDED_BY_PASSED────────┴──> EXPIRED
+
+any non-terminal state ──CANCEL──> CANCELLED
+```
+
+Every transition goes through `RequestLifecycleService`, which rejects illegal
+events, stamps timestamps and writes a `request_status_history` row. Guards enforce
+that a hospital cannot confirm a donor who never accepted, and that a bank cannot
+fulfill without stock.
+
+Escalation deadlines come from the urgency: `CRITICAL` 2h, `HIGH` 6h, `NORMAL` 24h.
+
+---
+
+## Running it locally
+
+### Prerequisites
+
+| Tool | Notes |
+|---|---|
+| Java 17+ | Eclipse Temurin |
+| PostgreSQL 16 | Or use the bundled `docker-compose.yml` |
+| Docker | Optional, for Redis and RabbitMQ |
+| Node.js LTS | For the frontend |
+
+The app starts and works without Redis or RabbitMQ — you lose the GEO index,
+caching, the rate limit and email delivery, and everything else degrades to SQL.
+
+### Database
+
+```sql
+CREATE DATABASE lifelink;
+CREATE USER lifelink_app WITH PASSWORD 'changeme';
+GRANT ALL PRIVILEGES ON DATABASE lifelink TO lifelink_app;
+```
+
+Flyway owns the schema and applies migrations on boot; Hibernate only validates
+that the entities match.
+
+### Redis and RabbitMQ
+
+```bash
+docker compose up -d
+```
+
+### Start the API
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+It listens on **8080**. On first start `AdminBootstrap` creates the admin account
+from `app.admin.*`, because without an admin nobody can verify a hospital and no
+request could ever be raised.
+
+To load demo data (one hospital, one blood bank, twelve donors around Bengaluru):
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=seed
+```
+
+Seeded accounts are `hospital@lifelink.local`, `bloodbank@lifelink.local` and
+`donor1..12@lifelink.local`, all with password `password123`.
+
+### Configuration
+
+Secrets are read from the environment; the defaults in `application.yml` are
+development-only.
+
+| Variable | Purpose |
+|---|---|
+| `DB_PASSWORD` | Postgres app-user password |
+| `JWT_SECRET` | HS256 signing key, 32+ bytes |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Bootstrapped admin account |
+| `MAIL_USER` / `MAIL_PASSWORD` | Mailtrap credentials; blank keeps email in log-only mode |
+| `REDIS_HOST`, `RABBITMQ_HOST` | Default to localhost |
+
+---
+
+## Tests
+
+```bash
+cd backend
+./mvnw test
+```
+
+Tests boot the real application against an **embedded PostgreSQL** — a real server,
+not H2, so Flyway migrations and native SQL run exactly as in production, and no
+Docker is required.
+
+Most tests run with Redis and RabbitMQ *absent*, which is deliberate: it keeps the
+degradation paths covered. `RedisIntegrationTest` starts a real embedded Redis for
+the cases that must prove the Redis path itself works.
+
+---
+
+## API
+
+Base path `/api`. All endpoints except registration, login, refresh and
+`/meta/**` require `Authorization: Bearer <accessToken>`.
+
+Access tokens last 15 minutes. Refresh tokens last 7 days, are stored hashed, and
+rotate on every use — presenting one revokes it and issues a new pair.
+
+| Area | Endpoints |
+|---|---|
+| Auth | `POST /auth/register/{donor,hospital,bloodbank}`, `POST /auth/{login,refresh,logout}`, `GET /auth/me` |
+| Donor | `GET/PUT /donors/me`, `PATCH /donors/me/availability`, `GET /donors/me/{matches,donations,eligibility}`, `POST /matches/{id}/{accept,decline}` |
+| Hospital | `POST/GET /requests`, `GET /requests/{id}`, `GET /requests/{id}/{matches,history}`, `POST /requests/{id}/matches/{matchId}/confirm`, `POST /requests/{id}/{fulfill,cancel}` |
+| Blood bank | `GET/PUT /bloodbanks/me/inventory`, `GET /bloodbanks/me/escalations`, `POST /escalations/{id}/{accept,fulfill}` |
+| Admin | `GET /admin/verifications?type=hospital\|bloodbank`, `POST /admin/verifications/{userId}/{approve,reject}`, `GET /admin/stats`, `PATCH /admin/users/{id}/status` |
+| Shared | `GET /notifications`, `PATCH /notifications/{id}/read`, `GET /meta/blood-groups` |
+
+Errors are RFC 7807 `ProblemDetail` documents. Hospitals are capped at **10 requests
+per hour**, which returns `429`.
+
+Verification paths take the account's **user id**, which is what the queue returns
+as `userId` — it identifies a hospital or a blood bank uniformly.
+
+---
+
+## Layout
+
+```
+backend/src/main/java/com/lifelink/
+  admin/        verification queue, platform stats, account status
+  auth/         registration, login, refresh-token rotation
+  bloodbank/    inventory, escalation queue, accept/fulfill
+  common/       blood groups and compatibility, errors, geo distance
+  dev/          seed profile
+  donor/        profile, availability, eligibility, history
+  hospital/     hospital entity and lookup
+  job/          Quartz jobs and their schedule
+  messaging/    RabbitMQ exchange, publisher, channel workers
+  notification/ in-app notification rows
+  redis/        GEO index, caches, rate limiter
+  request/      request lifecycle, matching engine, donor responses
+  security/     JWT issuing and the auth filter
+  user/         accounts and roles
+```
+
+---
+
+## Known gaps
+
+- **Frontend is not built yet.** The React app in `frontend/` is the remaining work
+  from spec §9.
+- **Spring State Machine** is a dependency but unused; `RequestLifecycleService`
+  hand-rolls the transition table in `RequestEvent`, which satisfies §3 (validated
+  transitions plus an audit row) with far less machinery. Either wire it up or drop
+  the dependency.
+- **`donor:{id}:profile` caches the donor's own dashboard read**, not the match
+  ranking as §7 describes. Ranking still has to reach Postgres to exclude donors
+  already tied to an active request, so a profile cache would not save the query.
+- **Blood banks have no per-bank radius**, so escalation uses a fixed 50 km reach.
