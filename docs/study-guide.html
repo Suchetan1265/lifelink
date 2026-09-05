@@ -1,0 +1,997 @@
+<title>Backend Engineering Study Guide</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --ground: #f3f4f7; --surface: #ffffff; --sunk: #eaecf1;
+    --ink: #14161a; --ink-soft: #3d434d; --muted: #626977;
+    --line: #e1e4ea; --line-strong: #ccd1da;
+    --project: #b3121b; --project-soft: #fbecec;
+    --interview: #2f3d8f; --interview-soft: #eceef9;
+    --good: #12703c;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", monospace;
+    --measure: 70ch;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #101216; --surface: #181b21; --sunk: #21252c;
+      --ink: #eef0f4; --ink-soft: #c6cbd4; --muted: #949cab;
+      --line: #2a2f38; --line-strong: #3c424e;
+      --project: #f26761; --project-soft: #33191a;
+      --interview: #93a4f5; --interview-soft: #1c2140;
+      --good: #5fc98a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #101216; --surface: #181b21; --sunk: #21252c;
+    --ink: #eef0f4; --ink-soft: #c6cbd4; --muted: #949cab;
+    --line: #2a2f38; --line-strong: #3c424e;
+    --project: #f26761; --project-soft: #33191a;
+    --interview: #93a4f5; --interview-soft: #1c2140;
+    --good: #5fc98a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--serif); font-size: 16.5px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    display: grid; grid-template-columns: 17rem minmax(0, 1fr);
+    gap: 3.5rem; max-width: 74rem; margin: 0 auto; padding: 0 2rem 7rem;
+  }
+
+  .masthead { grid-column: 1 / -1; padding: 3.5rem 0 2rem; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: var(--sans); font-size: 0.72rem; font-weight: 650;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--project); margin: 0 0 0.8rem;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 700; font-size: clamp(2rem, 5vw, 2.9rem);
+    letter-spacing: -0.032em; line-height: 1.05; margin: 0 0 0.9rem; text-wrap: balance;
+  }
+  .standfirst { max-width: var(--measure); font-size: 1.1rem; color: var(--ink-soft); margin: 0; }
+
+  nav {
+    position: sticky; top: 2rem; align-self: start;
+    font-family: var(--sans); font-size: 0.85rem; padding-top: 2.5rem;
+    max-height: calc(100vh - 4rem); overflow-y: auto;
+  }
+  nav a.home { display: block; font-weight: 650; color: var(--project); text-decoration: none; margin-bottom: 1.25rem; }
+  nav a.home::before { content: "\2190\00a0"; }
+  nav h2 { font-size: 0.7rem; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.7rem; }
+  nav ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+  nav ol a {
+    display: flex; gap: 0.6rem; color: var(--ink-soft); text-decoration: none;
+    border-left: 2px solid var(--line); padding: 0.2rem 0 0.2rem 0.7rem;
+  }
+  nav ol a:hover, nav ol a:focus-visible { color: var(--project); border-left-color: var(--project); }
+  nav .n { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); flex: none; }
+
+  main { padding-top: 2.5rem; min-width: 0; }
+  section + section { margin-top: 4rem; }
+  h2 {
+    font-family: var(--sans); font-weight: 700; font-size: 1.7rem; letter-spacing: -0.025em;
+    line-height: 1.15; margin: 0 0 0.4rem; scroll-margin-top: 1.5rem; text-wrap: balance;
+  }
+  h2 .n { color: var(--project); font-family: var(--mono); font-size: 1.1rem; margin-right: 0.6rem; }
+  h3 {
+    font-family: var(--sans); font-weight: 650; font-size: 1.12rem;
+    margin: 2.25rem 0 0.6rem; text-wrap: balance;
+  }
+  h4 { font-family: var(--sans); font-weight: 650; font-size: 0.96rem; margin: 1.5rem 0 0.4rem; }
+  p, li { max-width: var(--measure); }
+  p { margin: 0 0 0.95rem; }
+  ul, ol.body { padding-left: 1.25rem; }
+  li { margin-bottom: 0.4rem; }
+  a { color: var(--project); }
+  strong { font-weight: 700; color: var(--ink); }
+  .lede { font-size: 1.05rem; color: var(--ink-soft); margin-bottom: 1.75rem; }
+
+  code {
+    font-family: var(--mono); font-size: 0.85em; background: var(--sunk);
+    padding: 0.1em 0.36em; border-radius: 3px;
+  }
+  pre {
+    font-family: var(--mono); font-size: 0.79rem; line-height: 1.55;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 0.95rem 1.1rem; overflow-x: auto; margin: 1.15rem 0;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  .table-wrap { overflow-x: auto; margin: 1.25rem 0; }
+  table {
+    width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 0.86rem;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-size: 0.69rem; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); background: var(--sunk); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.k { font-family: var(--mono); font-size: 0.8rem; white-space: nowrap; color: var(--project); font-weight: 600; }
+
+  /* Three recurring block types, distinguished by colour and label rather than
+     by the reader having to parse the prose to work out which is which. */
+  .box { border: 1px solid var(--line); border-left: 3px solid; border-radius: 6px; padding: 0.95rem 1.15rem; margin: 1.25rem 0; }
+  .box .tag {
+    display: block; font-family: var(--sans); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.4rem;
+  }
+  .box p { margin: 0 0 0.55rem; font-size: 0.95rem; max-width: none; }
+  .box p:last-child { margin-bottom: 0; }
+  .box ul { margin: 0.4rem 0 0; font-size: 0.94rem; }
+  .box li { max-width: none; }
+
+  .built { background: var(--surface); border-left-color: var(--project); }
+  .built .tag { color: var(--project); }
+
+  .ask { background: var(--interview-soft); border-left-color: var(--interview); border-color: var(--interview-soft); }
+  .ask .tag { color: var(--interview); }
+  .ask .q { font-weight: 650; font-family: var(--sans); font-size: 0.97rem; margin-bottom: 0.4rem; }
+
+  .trap { background: var(--surface); border-left-color: var(--muted); }
+  .trap .tag { color: var(--muted); }
+
+  .term { font-family: var(--sans); font-weight: 650; }
+
+  footer {
+    grid-column: 1 / -1; margin-top: 4.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
+    font-family: var(--sans); font-size: 0.84rem; color: var(--muted);
+  }
+  footer p { max-width: none; }
+  :focus-visible { outline: 2px solid var(--project); outline-offset: 2px; }
+
+  @media (max-width: 940px) {
+    .page { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 1.25rem 4rem; }
+    nav { position: static; max-height: none; padding-top: 1.75rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+    main { padding-top: 2rem; }
+    .masthead { padding-top: 2.25rem; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Study Guide</p>
+    <h1>Backend engineering, learned by building one thing</h1>
+    <p class="standfirst">
+      Every concept here is one you already shipped in LifeLink. This guide explains what each
+      one is, the problem it exists to solve, exactly how the project used it, and the version of
+      the question an interviewer will actually ask you.
+    </p>
+  </header>
+
+  <nav>
+    <a class="home" href="index.html">All documents</a>
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#use"><span class="n">00</span> How to use this</a></li>
+      <li><a href="#system"><span class="n">01</span> The system in one page</a></li>
+      <li><a href="#auth"><span class="n">02</span> Authentication</a></li>
+      <li><a href="#authz"><span class="n">03</span> Authorization</a></li>
+      <li><a href="#data"><span class="n">04</span> Databases and migrations</a></li>
+      <li><a href="#tx"><span class="n">05</span> Transactions</a></li>
+      <li><a href="#cache"><span class="n">06</span> Caching and Redis</a></li>
+      <li><a href="#queue"><span class="n">07</span> Message queues</a></li>
+      <li><a href="#jobs"><span class="n">08</span> Scheduled jobs</a></li>
+      <li><a href="#fail"><span class="n">09</span> Designing for failure</a></li>
+      <li><a href="#docker"><span class="n">10</span> Docker and deployment</a></li>
+      <li><a href="#testing"><span class="n">11</span> Testing</a></li>
+      <li><a href="#decisions"><span class="n">12</span> Every decision, and why</a></li>
+      <li><a href="#mock"><span class="n">13</span> Mock interview</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="use">
+      <h2><span class="n">00</span>How to use this</h2>
+      <p class="lede">
+        Read it once end to end, then use section 13 as a drill.
+      </p>
+      <p>
+        The single most valuable thing you have is that <strong>you built this</strong>. Interviewers
+        can tell within two minutes whether a project on a CV was understood or merely followed.
+        The difference is never the technology list; it is whether you can say why you chose one
+        thing over another and what you would do differently.
+      </p>
+      <p>Three kinds of block repeat throughout:</p>
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>How the project actually used the concept, with the real numbers and file names. This is
+          the material you tell stories from.</p>
+      </div>
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">A question you will genuinely be asked.</p>
+        <p>Followed by how to answer it, and what a weak answer sounds like.</p>
+      </div>
+      <div class="box trap">
+        <span class="tag">Common trap</span>
+        <p>A misunderstanding that sounds right and is not. These are where interviews are lost.</p>
+      </div>
+    </section>
+
+    <section id="system">
+      <h2><span class="n">01</span>The system in one page</h2>
+      <p class="lede">
+        Learn to describe this in ninety seconds. It is the opening of every interview where the
+        project comes up.
+      </p>
+      <p>
+        LifeLink matches blood donors to hospitals. A hospital raises a request; the system finds
+        nearby donors with a compatible blood group and notifies them; if nobody confirms before a
+        deadline that depends on urgency, the request escalates to blood banks holding stock.
+      </p>
+<pre><code>Browser (React)
+      |  HTTPS, JWT in an Authorization header
+      v
+Spring Boot API  --------> PostgreSQL   the source of truth
+      |          --------> Redis        geo index, caches, rate limit
+      |          --------> RabbitMQ     email / SMS / push fan-out
+      |
+   Quartz jobs: escalate (15m), expire (15m), eligibility (daily)</code></pre>
+      <p>
+        The sentence that makes it sound designed rather than assembled:
+        <strong>"PostgreSQL is the only thing that must be up. Redis and RabbitMQ are accelerators,
+        and every path through them degrades instead of failing."</strong> That single idea
+        organises most of this guide.
+      </p>
+    </section>
+
+    <section id="auth">
+      <h2><span class="n">02</span>Authentication</h2>
+      <p class="lede">Proving <em>who you are</em>. Distinct from authorization, which is what you may do.</p>
+
+      <h3>The problem it solves</h3>
+      <p>
+        HTTP is stateless: every request arrives with no memory of the last one. So each request
+        must carry proof of identity. The old answer was a <span class="term">session</span> — the
+        server stores who you are and gives you a cookie holding a lookup key. That works, but every
+        server instance then needs access to that session store, which becomes a bottleneck and a
+        shared dependency.
+      </p>
+
+      <h3>JWT: a token that carries its own proof</h3>
+      <p>
+        A <span class="term">JSON Web Token</span> is three base64 segments separated by dots:
+        a header, a payload of <span class="term">claims</span> (who the user is, when it expires),
+        and a signature. The server signs the first two parts with a secret key. When the token comes
+        back, the server recomputes the signature; if it matches, the payload was not tampered with.
+      </p>
+      <p>
+        The consequence is the whole point: <strong>the server does not need to store anything.</strong>
+        Any instance holding the secret can verify any token. That is what makes JWT scale
+        horizontally.
+      </p>
+      <div class="trap box">
+        <span class="tag">Common trap</span>
+        <p><strong>A JWT is signed, not encrypted.</strong> Anyone can read the payload by
+          base64-decoding it. Signing prevents modification, not reading. Never put anything secret
+          in a JWT. Saying this unprompted marks you out immediately.</p>
+      </div>
+
+      <h3>Why access tokens are short-lived, and what refresh tokens fix</h3>
+      <p>
+        Because nothing is stored server-side, a JWT cannot be revoked — it is valid until it
+        expires. If someone steals a token valid for 30 days, they have 30 days of access. The fix
+        is to make access tokens expire fast, and issue a second long-lived
+        <span class="term">refresh token</span> whose only job is to obtain new access tokens.
+        The refresh token <em>is</em> stored server-side, so it <em>can</em> be revoked.
+      </p>
+      <p>
+        <span class="term">Rotation</span> makes this stronger. Each time a refresh token is used,
+        it is revoked and a new one issued. If an attacker steals one and uses it, the real user's
+        next refresh fails — which is both a lockout and a detectable signal that something is wrong.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <ul>
+          <li>Access token: JWT, HS256, <strong>15 minutes</strong>, claims are user id, role, email.</li>
+          <li>Refresh token: 256 bits of randomness, <strong>7 days</strong>, rotated on every use.</li>
+          <li>Refresh tokens are stored as a <strong>SHA-256 hash</strong>, never in plain text — a
+            database leak yields nothing usable.</li>
+          <li>Passwords use <strong>BCrypt</strong>.</li>
+          <li>Resetting a password or disabling an account <strong>revokes every refresh token</strong>
+            for that user.</li>
+        </ul>
+      </div>
+
+      <h3>Why BCrypt and not SHA-256 for passwords</h3>
+      <p>
+        This is the most common interview question in the whole area. SHA-256 is designed to be
+        <em>fast</em> — billions of hashes per second on a GPU, which is exactly what an attacker
+        with a stolen password table wants. BCrypt is deliberately <span class="term">slow</span> and
+        has a tunable <span class="term">work factor</span>, so you can make it slower as hardware
+        improves. It also <span class="term">salts</span> every password automatically, so two users
+        with the same password get different hashes and one cracked password does not reveal others.
+      </p>
+      <p class="muted" style="font-size:0.95rem">
+        The general rule: fast hashes for integrity, slow hashes for passwords. BCrypt, scrypt and
+        Argon2 are the slow family.
+      </p>
+
+      <h3>OAuth and "Sign in with Google"</h3>
+      <p>
+        OAuth 2.0 lets a user prove their identity to you via a provider they already trust, without
+        you ever seeing their password. In the flow LifeLink uses, the browser asks Google for an
+        <span class="term">ID token</span> — itself a JWT, signed by Google — and posts it to the
+        backend. The backend verifies it against Google's <em>public</em> keys.
+      </p>
+      <p>Verification is three checks, and a candidate who names all three sounds senior:</p>
+      <ol class="body">
+        <li><strong>Signature</strong> — against Google's published JWKS, proving Google issued it.</li>
+        <li><strong>Issuer</strong> — that <code>iss</code> is Google and not somebody else.</li>
+        <li><strong>Audience</strong> — that <code>aud</code> is <em>your</em> client id. Without
+          this check, a token minted for any other Google app would be accepted, which is a complete
+          authentication bypass.</li>
+      </ol>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>A first-time Google user gets an account with <em>no donor profile</em>, because a Google
+          identity says nothing about blood group, location or travel radius. The client sends them
+          to a short form before the dashboard becomes reachable. Their password hash is set to a
+          random unusable value rather than null, so ordinary password login simply fails instead of
+          needing a special case.</p>
+      </div>
+
+      <h3>Password reset done safely</h3>
+      <p>Three properties matter, and each has a reason:</p>
+      <ul>
+        <li><strong>Single-use and time-limited</strong> — a link leaked from an inbox months later
+          is worthless.</li>
+        <li><strong>Stored hashed</strong> — same argument as refresh tokens.</li>
+        <li><strong>Always answers "sent"</strong>, whether or not the address exists. Otherwise the
+          endpoint becomes a way to discover who has an account, which is called
+          <span class="term">user enumeration</span>.</li>
+      </ul>
+      <p>LifeLink also revokes every session on reset: whoever prompted the reset may know the old password.</p>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"Where do you store the JWT on the client, and why?"</p>
+        <p>There is no perfect answer, and they want to see you know the trade-off.
+          <strong>localStorage</strong> is simple but readable by any injected script, so it is
+          vulnerable to XSS. An <strong>httpOnly cookie</strong> is invisible to JavaScript, but
+          cookies are sent automatically, which opens CSRF unless you add SameSite or a token.</p>
+        <p>Say which you chose and why. LifeLink uses localStorage, accepting XSS exposure for
+          simplicity, and mitigates the blast radius with 15-minute access tokens. Naming the
+          mitigation is what turns a weak answer into a considered one.</p>
+      </div>
+    </section>
+
+    <section id="authz">
+      <h2><span class="n">03</span>Authorization</h2>
+      <p class="lede">Given that we know who you are, what are you allowed to do?</p>
+      <p>
+        Authentication happens once per request, at the edge. Authorization happens continuously and
+        at several depths, and conflating the two is a classic junior mistake.
+      </p>
+
+      <h3>Two layers, and why one is not enough</h3>
+      <p>
+        <span class="term">Role-based access control</span> answers "is this user a HOSPITAL?" That
+        is coarse. It does not answer "is this <em>their</em> request?" — which is
+        <span class="term">ownership</span>, and it is where real breaches happen.
+      </p>
+      <p>
+        A system that only checks roles has an <span class="term">insecure direct object reference</span>
+        bug: hospital A requests <code>/api/requests/42</code>, passes the role check because it is a
+        hospital, and reads hospital B's data.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <ul>
+          <li><strong>Role</strong> at the controller: <code>@PreAuthorize("hasRole('HOSPITAL')")</code>.</li>
+          <li><strong>Ownership</strong> in the service: every request load goes through
+            <code>loadOwnedRequest()</code>, which throws if the request belongs to another hospital.</li>
+          <li><strong>State</strong> in the lifecycle: a hospital cannot confirm a donor who has not
+            accepted, however legitimate the hospital.</li>
+        </ul>
+        <p>Three independent gates. The client also hides screens by role, but that is
+          <em>convenience, not security</em> — anyone can call the API directly, which is why every
+          check is repeated server-side.</p>
+      </div>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"Your frontend hides the admin page from non-admins. Is that secure?"</p>
+        <p>No, and the answer should be immediate. Client code runs on the user's machine and can be
+          modified; the API is the real boundary. Client-side guards exist so people do not see
+          broken screens. Then give the example: LifeLink's admin routes are role-guarded in React
+          <em>and</em> enforced with <code>@PreAuthorize</code>, and the second one is the one that
+          matters.</p>
+      </div>
+    </section>
+
+    <section id="data">
+      <h2><span class="n">04</span>Databases and migrations</h2>
+
+      <h3>Why a relational database here</h3>
+      <p>
+        The data is deeply relational — donors, hospitals, requests, matches, donations — and
+        correctness matters more than raw write throughput. Relational databases give you
+        <span class="term">foreign keys</span> (a match cannot point at a request that does not
+        exist), <span class="term">unique constraints</span> (a donor cannot be matched twice to the
+        same request), and <span class="term">transactions</span>.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>PostgreSQL over MySQL, for three concrete features rather than preference:
+          <strong>partial indexes</strong>, <code>TIMESTAMPTZ</code> for unambiguous instants across
+          zones, and built-in trigonometric functions used by the fallback distance query.</p>
+      </div>
+
+      <h3>Indexes, and the partial index worth mentioning</h3>
+      <p>
+        An index is a lookup structure that turns a full-table scan into a direct seek. The cost is
+        space and slower writes, since every insert must update the index too. So you index what you
+        filter on, not everything.
+      </p>
+      <p>
+        A <span class="term">partial index</span> covers only rows matching a condition:
+      </p>
+<pre><code>CREATE INDEX idx_donors_available_by_group
+  ON donors(blood_group) WHERE available = true;</code></pre>
+      <p>
+        Matching only ever looks for <em>available</em> donors, so indexing the unavailable ones
+        would be wasted space and wasted write cost. The index is smaller, so more of it stays in
+        memory. This is a genuinely good detail to raise unprompted.
+      </p>
+
+      <h3>Migrations: version control for your schema</h3>
+      <p>
+        A <span class="term">migration</span> is a numbered SQL file describing one schema change.
+        The tool records which have run, so every environment converges on the same schema by
+        applying the same files in the same order. Without this, production schemas drift and nobody
+        can reproduce a bug.
+      </p>
+      <p>
+        The rule: <strong>migrations are append-only</strong>. Never edit one that has run anywhere.
+        Write a new one.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>Flyway owns the schema; Hibernate runs <code>ddl-auto: validate</code>, which
+          <em>checks</em> that entities match and refuses to start otherwise. Three migrations:
+          <code>V1__init</code>, <code>V2__escalation_accepting_bank</code>,
+          <code>V3__password_reset</code>.</p>
+        <p>Using <code>ddl-auto: update</code> in production is a well-known way to lose data —
+          Hibernate guesses at changes and will happily do the wrong thing. <code>validate</code>
+          turns schema drift into a startup failure, which is where you want to find it.</p>
+      </div>
+    </section>
+
+    <section id="tx">
+      <h2><span class="n">05</span>Transactions</h2>
+      <p class="lede">A group of operations that all succeed or all fail.</p>
+      <p>
+        Recording a donation writes a donation row, closes the request, and sets the donor's
+        90-day cooldown. If the second write fails after the first succeeds, you have blood recorded
+        against an open request and a donor who never went on cooldown. A transaction makes the
+        three either all happen or none.
+      </p>
+      <p>
+        <span class="term">ACID</span> is the property set: <strong>Atomicity</strong> (all or
+        nothing), <strong>Consistency</strong> (constraints hold), <strong>Isolation</strong>
+        (concurrent transactions do not see each other's half-finished work),
+        <strong>Durability</strong> (committed means survives a crash).
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p><code>@Transactional</code> on service methods. Spring wraps the method in a proxy that
+          opens a transaction before and commits after, rolling back on a runtime exception.</p>
+        <p>Some internal methods use <code>Propagation.MANDATORY</code>, which means "refuse to run
+          unless a transaction already exists" — a compile-time-ish guarantee that the matching
+          engine can never be called outside one.</p>
+      </div>
+
+      <div class="trap box">
+        <span class="tag">Common trap</span>
+        <p><strong><code>@Transactional</code> does nothing when a method calls itself.</strong>
+          Spring implements it with a proxy that wraps the object. An internal call goes direct to
+          the instance and bypasses the proxy entirely, so no transaction starts. This surprises
+          almost everyone once, and interviewers love it.</p>
+      </div>
+    </section>
+
+    <section id="cache">
+      <h2><span class="n">06</span>Caching and Redis</h2>
+      <p class="lede">Keep a copy of expensive answers somewhere fast.</p>
+
+      <h3>What Redis is</h3>
+      <p>
+        An in-memory data store. Because it never touches disk on the read path, lookups are
+        sub-millisecond where a database query might be tens of milliseconds. Unlike a plain
+        key-value cache it has real <span class="term">data structures</span>: lists, sets, sorted
+        sets, hashes, counters and geospatial indexes — which is why it is used for far more than
+        caching.
+      </p>
+
+      <h3>The three things Redis does in LifeLink</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Key</th><th>Structure</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="k">donors:geo:{group}</td><td>GEO set</td><td>Nearest available donors per blood group. Not a cache — an <em>index</em>.</td></tr>
+            <tr><td class="k">donor:{id}:profile</td><td>JSON, 1h TTL</td><td>A genuine read cache.</td></tr>
+            <tr><td class="k">stats:admin</td><td>JSON, 5m TTL</td><td>Caches an expensive multi-aggregate query.</td></tr>
+            <tr><td class="k">rl:requests:{id}</td><td>Counter, 1h TTL</td><td>Rate limiting. Not a cache at all.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Note that only two of the four are caches. Saying <em>"we used Redis as an index, a cache and
+        a counter, and those are three different problems"</em> is a much stronger answer than
+        "we used Redis for caching".
+      </p>
+
+      <h3>Geospatial search, and why the database was the wrong place</h3>
+      <p>
+        "Find donors within 15 km" naively means computing the distance from the hospital to every
+        donor and filtering — a full scan with trigonometry per row, which gets slower as you grow.
+        Redis GEO sets store points in a <span class="term">sorted set</span> keyed by a
+        <span class="term">geohash</span>, so nearby points sit near each other and a radius query
+        becomes a range scan.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p><strong>The interesting part is that Redis alone was not enough.</strong> Redis knows
+          where donors are; it does not know that a donor is already committed to another request.
+          So matching is a hybrid: Redis narrows by geography and blood group, then a single SQL
+          query filters those candidates by the rules only the database knows.</p>
+        <p>"Redis narrows, PostgreSQL decides" is the sentence to remember.</p>
+      </div>
+
+      <h3>Cache invalidation, and the write-through discipline</h3>
+      <p>
+        The hardest part of caching is knowing when a cached copy is wrong. Two broad strategies:
+      </p>
+      <ul>
+        <li><span class="term">Cache-aside</span> — check the cache; on a miss, read the database and
+          populate. Simple, but stale until the TTL expires.</li>
+        <li><span class="term">Write-through</span> — update the cache at the moment the underlying
+          data changes. More work, but never stale.</li>
+      </ul>
+      <p>
+        Membership of the geo index means "matchable right now", which four different events can
+        change. All four write through immediately: the availability toggle, a profile edit that moves
+        a donor or corrects their blood group, a recorded donation starting a cooldown, and the daily
+        eligibility job ending one.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>A profile edit removes the donor from <em>all eight</em> group sets before re-adding, so a
+          corrected blood group cannot leave a stale entry in the old one.</p>
+        <p>And the detail worth leading with: <strong>the whole index is rebuilt from PostgreSQL on
+          every startup.</strong> Without that, a flushed Redis would silently shrink the pool of
+          reachable donors with no error anywhere — the failure looks exactly like "no donors
+          nearby", which is the most dangerous kind of bug: silent and plausible.</p>
+      </div>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"What happens when your cache and database disagree?"</p>
+        <p>Answer with the principle first: <strong>one system is the source of truth and the other
+          is derived.</strong> PostgreSQL is authoritative; Redis holds a copy that can always be
+          rebuilt from it. Then give the concrete mechanisms: write-through on every change, TTLs so
+          nothing is stale indefinitely, and a full rebuild at startup so a wiped cache self-heals.</p>
+      </div>
+    </section>
+
+    <section id="queue">
+      <h2><span class="n">07</span>Message queues and async work</h2>
+
+      <h3>The problem</h3>
+      <p>
+        A hospital raises a request and twenty donors need notifying. Sending twenty emails inline
+        means the HTTP request takes as long as the slowest mail server, and if the mail provider is
+        down, raising a request fails — for a reason that has nothing to do with raising requests.
+      </p>
+      <p>
+        A <span class="term">message queue</span> decouples them. The API writes a message and returns
+        immediately; separate <span class="term">consumers</span> do the slow work. The API's latency
+        no longer depends on email.
+      </p>
+
+      <h3>The vocabulary</h3>
+      <ul>
+        <li><span class="term">Producer</span> — publishes a message.</li>
+        <li><span class="term">Exchange</span> — receives messages and decides where they go.</li>
+        <li><span class="term">Queue</span> — holds messages until consumed.</li>
+        <li><span class="term">Binding</span> — a rule connecting an exchange to a queue.</li>
+        <li><span class="term">Routing key</span> — a label on the message that bindings match against.</li>
+      </ul>
+      <p>
+        A <span class="term">topic exchange</span> routes by pattern, which is what lets one
+        notification fan out to three independent channels.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>One topic exchange <code>notifications</code>, routing keys <code>notify.email</code>,
+          <code>notify.sms</code>, <code>notify.push</code>, one durable queue per channel. Email and
+          push get everything; SMS costs money, so it is reserved for types someone must act on
+          quickly.</p>
+        <p>Retry: 4 attempts, 2s initial, doubling, capped at 30s. Exhausted messages are
+          <em>rejected, not requeued</em>, so they land on a dead-letter queue instead of looping
+          forever.</p>
+      </div>
+
+      <h3>Dead-letter queues</h3>
+      <p>
+        A <span class="term">DLQ</span> is where messages go when they cannot be processed. Without
+        one you choose between losing the message and retrying it forever — and infinite retry of a
+        message that can never succeed is a classic way to take down a consumer. A DLQ makes failure
+        inspectable.
+      </p>
+
+      <h3>The subtle bug worth telling a story about</h3>
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>Publishing originally happened inside the transaction. That is wrong, and the reason is
+          worth understanding: if the transaction rolls back <em>after</em> the message is published,
+          you have emailed twenty donors about a request that does not exist.</p>
+        <p>The fix is to publish <strong>after commit</strong>, using a transactional event listener.
+          It is a small change that demonstrates you think about ordering and failure, and it is a
+          genuinely good interview story because the bug is invisible until it happens.</p>
+      </div>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"What if a message is delivered twice?"</p>
+        <p>Most brokers guarantee <span class="term">at-least-once</span> delivery, not exactly-once
+          — so duplicates are a fact of life and consumers should be
+          <span class="term">idempotent</span>: processing the same message twice has the same effect
+          as once. For LifeLink a duplicate means a duplicate email, which is tolerable. Say what the
+          consequence would be in your system and whether you accepted it. Claiming exactly-once is a
+          red flag; it is famously close to impossible in a distributed system.</p>
+      </div>
+    </section>
+
+    <section id="jobs">
+      <h2><span class="n">08</span>Scheduled jobs</h2>
+      <p class="lede">Work that happens because time passed, not because someone asked.</p>
+      <p>
+        Nobody clicks a button to expire a request. It expires because its deadline passed. That kind
+        of work needs something that wakes up on a schedule and looks for things to do.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Job</th><th>Schedule</th><th>Work</th></tr></thead>
+            <tbody>
+              <tr><td class="k">Escalation</td><td>every 15 min</td><td>Requests past their urgency window become ESCALATED; nearby banks alerted</td></tr>
+              <tr><td class="k">Expiry</td><td>every 15 min</td><td>Requests past needed-by become EXPIRED</td></tr>
+              <tr><td class="k">Eligibility</td><td>daily 00:05</td><td>Donors off cooldown are notified and re-indexed</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>Two design points that make jobs safe</h3>
+      <p>
+        <strong>Deadlines live in one place.</strong> The per-urgency windows (2h critical, 6h high,
+        24h normal) are fields on the <code>Urgency</code> enum, and the job filters in Java rather
+        than encoding intervals in SQL. Encoding them twice means a new urgency level is silently
+        ignored by the job. Single source of truth beats a marginally faster query.
+      </p>
+      <p>
+        <strong>Jobs are catch-up, not replay.</strong> If the app is down for an hour, three
+        15-minute windows are missed. LifeLink does not replay them, because each run re-reads
+        whatever is <em>still</em> overdue — running once catches everything. That is a
+        <span class="term">misfire policy</span>, and knowing the term is useful.
+      </p>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"You scale to three instances. What happens to your scheduled jobs?"</p>
+        <p>This is the question on scheduling, and the honest answer is best. All three fire, so the
+          job runs three times concurrently — which for LifeLink could escalate the same request
+          three times and send triplicate alerts.</p>
+        <p>The fixes: Quartz supports a <strong>clustered JDBC job store</strong> where instances
+          coordinate through the database so only one runs each trigger; or take a distributed lock;
+          or move scheduling outside the app entirely. LifeLink uses an in-memory store and runs one
+          instance, which is a deliberate limit rather than an oversight — and saying that is much
+          stronger than pretending it scales.</p>
+      </div>
+    </section>
+
+    <section id="fail">
+      <h2><span class="n">09</span>Designing for failure</h2>
+      <p class="lede">The section that most separates SDE1 from SDE2 answers.</p>
+      <p>
+        Junior designs assume dependencies work. Senior designs decide, for each dependency, what
+        happens when it does not — and make that a deliberate choice rather than an accident.
+      </p>
+
+      <h3>Fail closed or fail open?</h3>
+      <p>
+        <span class="term">Fail closed</span> means denying the operation when a check cannot run —
+        safe, but unavailable. <span class="term">Fail open</span> means allowing it — available, but
+        unprotected. Which is right depends entirely on what the check protects.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>The rate limiter <strong>fails open</strong>. If Redis is down, the request is allowed.
+          The reasoning: a hospital with a genuine emergency must never be blocked because a cache is
+          unavailable. Losing the cap for the length of an outage is the cheaper failure.</p>
+        <p>An authentication check would fail <em>closed</em> — you never let someone in because the
+          check was unavailable. Same principle, opposite answer, because the stakes are reversed.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Failure</th><th>Behaviour</th><th>Cost</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Redis down</td><td>Matching falls back to SQL; caches miss to the database; limiter fails open</td><td>Slower, no rate cap</td></tr>
+            <tr><td class="k">Redis flushed</td><td>Rebuilt from PostgreSQL at next startup</td><td>None</td></tr>
+            <tr><td class="k">RabbitMQ down</td><td>Publish logs a warning; in-app notifications unaffected</td><td>Email and SMS only</td></tr>
+            <tr><td class="k">PostgreSQL down</td><td>The application is down</td><td>Total, and deliberately so</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        That last row matters. <strong>Not everything should degrade.</strong> PostgreSQL is the
+        source of truth; serving from a stale cache with no authority behind it would be worse than
+        an error page. Knowing which dependency is allowed to be fatal is itself a design decision.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>A real consequence of this design: the health endpoint aggregates Redis and RabbitMQ, so
+          with either unreachable it reported DOWN — and the hosting platform would have restart-looped
+          a perfectly serving app. The fix was a health group covering only the database. The
+          <em>readiness</em> signal has to match what the app genuinely requires.</p>
+      </div>
+    </section>
+
+    <section id="docker">
+      <h2><span class="n">10</span>Docker and deployment</h2>
+
+      <h3>What a container actually is</h3>
+      <p>
+        "It works on my machine" happens because machines differ — Java version, libraries, settings.
+        A container packages the application <em>and</em> its environment into one image that runs
+        identically anywhere.
+      </p>
+      <p>
+        A <span class="term">virtual machine</span> emulates hardware and runs a whole guest OS:
+        heavy, slow to start. A <span class="term">container</span> shares the host kernel and
+        isolates only the process: megabytes, starts in a second. That distinction is a very common
+        interview question.
+      </p>
+      <p>
+        An <span class="term">image</span> is the template; a <span class="term">container</span> is a
+        running instance. Images are built in <span class="term">layers</span>, and layers are cached
+        — which is why Dockerfiles put rarely-changing steps first.
+      </p>
+
+      <h3>Multi-stage builds</h3>
+      <p>
+        Building needs a JDK, Maven and Node. <em>Running</em> needs only a JRE and a jar. A
+        multi-stage build compiles in a fat builder image, then copies just the artifact into a
+        slim runtime image — the final image never contains the compiler or source.
+      </p>
+<pre><code>FROM maven:3.9-eclipse-temurin-17 AS build
+COPY backend backend
+COPY frontend frontend
+RUN mvn -f backend/pom.xml -Pwebapp package -DskipTests
+
+FROM eclipse-temurin:17-jre
+COPY --from=build /build/backend/target/*.jar app.jar
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=55", ...]</code></pre>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>The React build is packaged <em>inside</em> the Spring Boot jar, so one service serves the
+          UI and the API from one origin. That removes CORS entirely and halves the hosting
+          footprint. Trade-off: you cannot redeploy the frontend without restarting the backend.</p>
+        <p>The container runs as a <strong>non-root user</strong>, so a compromise inside it does not
+          start with root.</p>
+      </div>
+
+      <h3>Configuration and the twelve-factor idea</h3>
+      <p>
+        Config that differs between environments — database URLs, secrets — belongs in the
+        <strong>environment</strong>, not the image. One image is then promoted unchanged from test
+        to production, so what you tested is exactly what ships.
+      </p>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p><code>JWT_SECRET</code> has <em>no default</em>, so the app refuses to start without it.
+          A default would be published in the repository, and any deployment that forgot to override
+          it could have tokens forged against it. <strong>Failing loudly at startup beats running
+          insecurely.</strong></p>
+      </div>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"Why is your container memory configured the way it is?"</p>
+        <p>Because the JVM and the container disagree about memory unless you tell them not to. A
+          512 MB container with a heap set to 75% leaves too little for metaspace, code cache and
+          thread stacks — the container gets OOM-killed with nothing useful in the logs. LifeLink
+          uses 55% plus SerialGC, which has lower overhead at small heap sizes. This kind of answer
+          reads as production experience.</p>
+      </div>
+    </section>
+
+    <section id="testing">
+      <h2><span class="n">11</span>Testing</h2>
+
+      <h3>The kinds, and what each is for</h3>
+      <ul>
+        <li><span class="term">Unit</span> — one class, dependencies mocked. Fast, precise, but
+          proves nothing about how pieces fit.</li>
+        <li><span class="term">Integration</span> — several real components together. Slower, and
+          catches what unit tests cannot.</li>
+        <li><span class="term">End-to-end</span> — the whole system, usually through the UI. Slowest
+          and most brittle.</li>
+      </ul>
+
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p>50 tests, nearly all integration: they boot the real app against a real embedded
+          PostgreSQL, not H2 and not mocks. The reason is specific — the project uses partial
+          indexes, <code>TIMESTAMPTZ</code> and native SQL, none of which H2 reproduces faithfully.
+          A test suite that passes on H2 and fails on PostgreSQL is worse than no suite.</p>
+        <p>Testcontainers is the usual answer, but it needs Docker, which the development machine did
+          not have. Embedded PostgreSQL runs a real server with no Docker at all.</p>
+      </div>
+
+      <h3>The decision worth explaining in an interview</h3>
+      <div class="box built">
+        <span class="tag">In LifeLink</span>
+        <p><strong>Most tests run with Redis and RabbitMQ deliberately absent.</strong> That sounds
+          like laziness and is the opposite: those are the fallback paths, so running the suite
+          without them keeps every degradation path continuously covered. A change that makes a Redis
+          call non-optional fails the build rather than surfacing during an outage.</p>
+        <p>A separate, smaller suite runs against a real embedded Redis for the cases that must prove
+          the Redis path itself works.</p>
+      </div>
+
+      <div class="trap box">
+        <span class="tag">Common trap</span>
+        <p><strong>Shared state makes tests order-dependent.</strong> When a feature was added so
+          donors are matched the moment they become available, four existing tests broke — donors
+          started claiming <em>other</em> tests' open requests before their own were raised. The fix
+          was to give each test its own patch of the globe, so nothing overlaps. "My tests passed
+          individually but failed together" is a great, honest story about test isolation.</p>
+      </div>
+    </section>
+
+    <section id="decisions">
+      <h2><span class="n">12</span>Every decision, and why</h2>
+      <p class="lede">
+        The table to revise before an interview. For each, know the alternative and the reason.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Decision</th><th>Instead of</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td class="k">PostgreSQL</td><td>MySQL</td><td>Partial indexes, TIMESTAMPTZ, trig functions for the distance fallback</td></tr>
+            <tr><td class="k">Flyway, ddl-auto validate</td><td>Hibernate auto-update</td><td>Schema is versioned and reviewable; drift fails at startup instead of corrupting data</td></tr>
+            <tr><td class="k">JWT + rotating refresh</td><td>Server sessions</td><td>Stateless verification scales horizontally; rotation limits a stolen token</td></tr>
+            <tr><td class="k">BCrypt</td><td>SHA-256</td><td>Deliberately slow and salted; fast hashes are what attackers want</td></tr>
+            <tr><td class="k">Redis GEO + SQL filter</td><td>Pure SQL distance</td><td>Geo search is the expensive part; only the DB knows who is already committed</td></tr>
+            <tr><td class="k">Rebuild index at startup</td><td>Trusting Redis</td><td>A flushed cache would silently shrink matching with no error</td></tr>
+            <tr><td class="k">Publish after commit</td><td>Publish inline</td><td>A rollback would otherwise email people about work that never happened</td></tr>
+            <tr><td class="k">Message carries ids</td><td>Carrying email addresses</td><td>Workers resolve current details; no stale contacts sitting in a queue</td></tr>
+            <tr><td class="k">Rate limiter fails open</td><td>Fails closed</td><td>An emergency request must not be blocked because a cache is down</td></tr>
+            <tr><td class="k">Health group excludes optional deps</td><td>Aggregate health</td><td>Otherwise the platform restarts a serving app when Redis hiccups</td></tr>
+            <tr><td class="k">Hand-rolled state machine</td><td>Spring State Machine</td><td>An enum transition table plus one service does the same in ~40 lines</td></tr>
+            <tr><td class="k">Embedded PostgreSQL in tests</td><td>H2, or Testcontainers</td><td>H2 does not reproduce partial indexes or native SQL; Testcontainers needs Docker</td></tr>
+            <tr><td class="k">Tests run without Redis/Rabbit</td><td>Always providing them</td><td>Keeps every degradation path continuously covered</td></tr>
+            <tr><td class="k">Single service</td><td>Separate API and frontend</td><td>No CORS, one origin, half the hosting; costs independent deploys</td></tr>
+            <tr><td class="k">JWT_SECRET has no default</td><td>A development default</td><td>A published signing key lets anyone forge tokens</td></tr>
+            <tr><td class="k">Polling every 10s</td><td>WebSockets</td><td>Far simpler, and adequate at this scale; revisit when it is not</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ask">
+        <span class="tag">The interviewer asks</span>
+        <p class="q">"What would you do differently?"</p>
+        <p>Never say "nothing". Real answers, all defensible:</p>
+        <ul>
+          <li><strong>No frontend tests.</strong> 50 on the backend, none on React. Given time,
+            component tests for the matching and confirmation flows.</li>
+          <li><strong>Spring State Machine is an unused dependency.</strong> Either adopt it or
+            remove it; leaving it is the worst of both.</li>
+          <li><strong>Scheduled jobs do not survive scaling out.</strong> Fine for one instance,
+            would need a clustered store or a lock.</li>
+          <li><strong>Donor coordinates are exposed to the requesting hospital</strong> so it can
+            plot the map. An approximate location until the donor is confirmed would be kinder.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="mock">
+      <h2><span class="n">13</span>Mock interview</h2>
+      <p class="lede">
+        Answer out loud. If an answer takes more than ninety seconds, it is not sharp enough yet.
+      </p>
+
+      <h3>Opening</h3>
+      <ol class="body">
+        <li>Describe LifeLink in ninety seconds.</li>
+        <li>Which part was hardest, and why?</li>
+        <li>Draw the architecture on a whiteboard and explain the data flow of one request.</li>
+      </ol>
+
+      <h3>Authentication and authorization</h3>
+      <ol class="body">
+        <li>What is inside a JWT, and what stops someone editing it?</li>
+        <li>Why two tokens instead of one?</li>
+        <li>Someone steals a refresh token. What happens, and how do you find out?</li>
+        <li>Why BCrypt rather than SHA-256?</li>
+        <li>Your API returns another hospital's request. Which check failed?</li>
+        <li>How do you verify a Google ID token, and what breaks if you skip the audience check?</li>
+      </ol>
+
+      <h3>Data</h3>
+      <ol class="body">
+        <li>Why a relational database here rather than MongoDB?</li>
+        <li>What is a partial index and why did you use one?</li>
+        <li>Why does Hibernate run in <code>validate</code> mode?</li>
+        <li>Walk through recording a donation. What must be atomic, and why?</li>
+      </ol>
+
+      <h3>Caching and queues</h3>
+      <ol class="body">
+        <li>Why Redis for geo search rather than a SQL distance query?</li>
+        <li>Redis is wiped in production. What happens?</li>
+        <li>How do you keep the cache from going stale?</li>
+        <li>Why publish notifications after commit rather than during?</li>
+        <li>A consumer keeps failing on one message. What happens to it?</li>
+        <li>Your broker is down. Is the app still usable?</li>
+      </ol>
+
+      <h3>Operations</h3>
+      <ol class="body">
+        <li>Difference between a container and a VM?</li>
+        <li>What does a multi-stage build buy you?</li>
+        <li>Why does the app refuse to start without <code>JWT_SECRET</code>?</li>
+        <li>Your health check reports DOWN but users are served fine. What went wrong?</li>
+        <li>You scale to three instances. What breaks first?</li>
+      </ol>
+
+      <h3>The closing question</h3>
+      <p>
+        <strong>"What would you do differently?"</strong> — prepare three specific answers with
+        reasons. This question separates people who built something from people who followed a
+        tutorial, and it is almost always asked.
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>
+      LifeLink study guide &middot; see also the <a href="tdd.html">technical design</a>,
+      the <a href="user-guide.html">user guide</a>, and the
+      <a href="https://github.com/Suchetan1265/lifelink">source</a>.
+    </p>
+  </footer>
+
+</div>

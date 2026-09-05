@@ -9,6 +9,9 @@ Redis · RabbitMQ · Quartz · JWT.
 
 🚀 **[Deployment guide](docs/DEPLOYMENT.md)** — one service, free tier, step by step.
 
+🎓 **[Study guide](https://suchetan1265.github.io/lifelink/study-guide.html)** — the concepts
+behind the build, and why each decision was made.
+
 📖 **[Documentation site](https://suchetan1265.github.io/lifelink/)** — the user guide and
 the technical design document, published from `docs/`.
 
