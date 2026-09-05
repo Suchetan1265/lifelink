@@ -5,6 +5,19 @@ import react from '@vitejs/plugin-react';
 // preflight and tokens are sent as plain headers.
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // The map and the charts are each only used on one screen, so keep
+        // them out of the bundle every page has to download.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          charts: ['recharts'],
+          map: ['leaflet', 'react-leaflet'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

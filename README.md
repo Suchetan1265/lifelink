@@ -227,9 +227,9 @@ backend/src/main/java/com/lifelink/
 
 ## Known gaps
 
-- **The frontend has never been run.** It was written on a machine without Node
-  installed, so `npm install && npm run dev` is the first real exercise it gets.
-  The backend is covered by tests; the React app is not.
+- **The frontend compiles but has not been used against a live backend.** `npm run
+  build` and the dev server both work, so imports, JSX and the bundle are sound,
+  but no screen has been clicked through end to end. There are no frontend tests.
 - **Spring State Machine** is a dependency but unused; `RequestLifecycleService`
   hand-rolls the transition table in `RequestEvent`, which satisfies §3 (validated
   transitions plus an audit row) with far less machinery. Either wire it up or drop
