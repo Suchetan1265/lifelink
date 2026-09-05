@@ -1,0 +1,9 @@
+# Tests point at an embedded PostgreSQL wired up in IntegrationTest.
+app:
+  admin:
+    email: admin@lifelink.test
+    password: admin-test-password
+
+logging:
+  level:
+    org.hibernate.SQL: warn
